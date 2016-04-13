@@ -65,7 +65,7 @@ public class DiscoveryListener {
 					socket.receive(receivedPacket);
 					stringPacket = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
 					System.out.println(stringPacket);
-					if (CommandEnum.DISCOVER.name().equals(stringPacket)) {
+					if (CommandEnum.DISCOVER.toString().equals(stringPacket)) {
 						discovered = true;
 						socket.close();
 					}

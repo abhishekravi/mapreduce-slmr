@@ -37,7 +37,7 @@ public class Discovery {
 
 				// To-do: Port the command to use Command object
 				byte[] buf = CommandEnum.DISCOVER.toString().getBytes();
-				DatagramPacket discovermsg = new DatagramPacket(buf, buf.length, InetAddress.getByName("10.102.7.255"),
+				DatagramPacket discovermsg = new DatagramPacket(buf, buf.length, InetAddress.getByName("10.42.0.255"),
 						54321);
 
 				@Override
@@ -59,7 +59,7 @@ public class Discovery {
 	 * fixed time intervals
 	 */
 	public void start() {
-		speaker.schedule(speakerTask, 5000);
+		speaker.schedule(speakerTask, 0, 500);
 		listener.start();
 	}
 
