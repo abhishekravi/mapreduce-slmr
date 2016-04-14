@@ -3,7 +3,11 @@ package neu.mr.client;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang.SerializationUtils;
 
@@ -11,7 +15,7 @@ import neu.mr.commons.Command;
 import neu.mr.commons.CommandEnum;
 
 /**
- * The listener class for our client that listens to the discovery packet that
+ * The ackListener class for our client that listens to the discovery packet that
  * the server sends
  * 
  * @author chintanpathak
@@ -26,14 +30,14 @@ public class DiscoveryListener {
 	}
 
 	/**
-	 * Start the listener
+	 * Start the ackListener
 	 */
 	public void start() {
 		listener.start();
 	}
 
 	/**
-	 * Runnable class for the listener with the run() method
+	 * Runnable class for the ackListener with the run() method
 	 * 
 	 * @author chintanpathak
 	 *
@@ -69,11 +73,42 @@ public class DiscoveryListener {
 
 					if (CommandEnum.DISCOVER.toString().equals(command.getName().toString())) {
 						discovered = true;
+						System.out.println(command);
+						sendDiscoveryAck(receivedPacket);
 						socket.close();
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+			}
+		}
+
+		/**
+		 * Sends back the discovery ack with the port
+		 * on which this client is hearing for commands from
+		 * the server
+		 * @param packet
+		 */
+		private void sendDiscoveryAck(DatagramPacket packet) {
+			InetAddress address;
+			try {
+				address = packet.getAddress();
+				int port = packet.getPort();
+				System.out.println("Address - " + address.getHostAddress());
+				System.out.println("Port - " + port);
+				
+				Command discoveryAck = new Command();
+				discoveryAck.setName(CommandEnum.DISCOVER_ACK);
+				List<String> params = new ArrayList<String>();
+				params.add("54321");
+				discoveryAck.setParams(params);
+				byte[] reply = SerializationUtils.serialize(discoveryAck);
+				DatagramPacket discoveryAckPacket = new DatagramPacket(reply, reply.length, address, port);
+				socket.send(discoveryAckPacket);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 

@@ -3,8 +3,6 @@ package neu.mr.server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -21,21 +19,21 @@ import neu.mr.utils.NetworkUtils;
  * @author chintanpathak
  *
  */
-public class Discovery {
+public class DiscoverySpeaker {
 
-	Thread listener;
+	Thread ackListener;
 	TimerTask speakerTask;
 	Timer speaker;
 	DatagramSocket broadcastSocket;
 
 	/**
-	 * Initialize the speaker & listener threads. Also create a scheduled task
+	 * Initialize the speaker & ackListener threads. Also create a scheduled task
 	 * to periodically send broadcast messages for discovery of clients.
 	 */
-	public Discovery() {
-		speaker = new Timer();
-		listener = new Thread(new ListenerRunnable());
+	public DiscoverySpeaker() {
 		createDatagramConnection();
+		speaker = new Timer();
+		ackListener = new Thread(new ListenerRunnable());
 		speakerTask = new TimerTask() {
 
 			Command discoverCommand = new Command();
@@ -43,10 +41,6 @@ public class Discovery {
 
 			{
 				discoverCommand.setName(CommandEnum.DISCOVER);
-				List<String> params = new ArrayList<String>();
-				params.add(NetworkUtils.getIpAddress().getHostAddress());
-				params.add("12345");
-				discoverCommand.setParams(params);
 				byte[] buf = SerializationUtils.serialize(discoverCommand);
 				discoverMsg = new DatagramPacket(buf, buf.length, NetworkUtils.getBroadcastIpAddress(), 54321);
 			}
@@ -68,12 +62,14 @@ public class Discovery {
 	 * fixed time intervals
 	 */
 	public void start() {
+		ackListener.start();
 		speaker.schedule(speakerTask, 0, 500);
-		listener.start();
 	}
 
 	/**
-	 * Runnable class for the listener thread
+	 * Runnable class for the ackListener thread.
+	 * It listens to the acknowledgement sent
+	 * by any possibly discovered client
 	 * 
 	 * @author chintanpathak
 	 *
@@ -81,8 +77,22 @@ public class Discovery {
 	private class ListenerRunnable implements Runnable {
 
 		public void run() {
+			try {
+				// DatagramSocket socket = new DatagramSocket();
+				byte[] buf = new byte[1024];
+				DatagramPacket replypacket = new DatagramPacket(buf, buf.length);
+				Command replyCommand;
+				while(true){
+					broadcastSocket.receive(replypacket);
+					replyCommand = (Command) SerializationUtils.deserialize(replypacket.getData());
+					System.out.println(replypacket.getAddress());
+					System.out.println(replypacket.getPort());
+					System.out.println(replyCommand);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	/**

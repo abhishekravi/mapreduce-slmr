@@ -8,7 +8,7 @@ package neu.mr.server;
 public class Server {
 
 	public static void main(String[] args) {
-		Discovery discovery = new Discovery();
+		DiscoverySpeaker discovery = new DiscoverySpeaker();
 		discovery.start();
 	}
 
