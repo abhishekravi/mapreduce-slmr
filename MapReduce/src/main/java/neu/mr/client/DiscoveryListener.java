@@ -1,15 +1,21 @@
 package neu.mr.client;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import org.apache.commons.lang.SerializationUtils;
+
+import neu.mr.commons.Command;
 import neu.mr.commons.CommandEnum;
 
 /**
- * The listener class for our client that listens to the
- * discovery packet that the server sends
+ * The listener class for our client that listens to the discovery packet that
+ * the server sends
  * 
  * @author chintanpathak
  *
@@ -38,7 +44,7 @@ public class DiscoveryListener {
 	private class ListenerRunnable implements Runnable {
 
 		DatagramPacket receivedPacket;
-		byte[] buf = new byte[256];
+		byte[] buf = new byte[2048];
 		boolean discovered = false;
 		DatagramSocket socket;
 
@@ -58,14 +64,13 @@ public class DiscoveryListener {
 		 * Listens for the discover packet
 		 */
 		public void run() {
-			String stringPacket;
 
 			while (!discovered) {
 				try {
 					socket.receive(receivedPacket);
-					stringPacket = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
-					System.out.println(stringPacket);
-					if (CommandEnum.DISCOVER.toString().equals(stringPacket)) {
+					Command command = (Command) SerializationUtils.deserialize(receivedPacket.getData());
+
+					if (CommandEnum.DISCOVER.toString().equals(command.getName().toString())) {
 						discovered = true;
 						socket.close();
 					}

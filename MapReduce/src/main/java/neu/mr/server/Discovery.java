@@ -1,14 +1,22 @@
 package neu.mr.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.commons.lang.SerializationUtils;
+
+import neu.mr.commons.Command;
 import neu.mr.commons.CommandEnum;
+import neu.mr.utils.NetworkUtils;
 
 /**
  * Server side class that is responsible for periodically sending the discovery
@@ -32,26 +40,31 @@ public class Discovery {
 		speaker = new Timer();
 		listener = new Thread(new ListenerRunnable());
 		createDatagramConnection();
-		try {
-			speakerTask = new TimerTask() {
+		speakerTask = new TimerTask() {
 
-				// To-do: Port the command to use Command object
-				byte[] buf = CommandEnum.DISCOVER.toString().getBytes();
-				DatagramPacket discovermsg = new DatagramPacket(buf, buf.length, InetAddress.getByName("10.42.0.255"),
-						54321);
+			Command discoverCommand = new Command();
+			DatagramPacket discoverMsg = null;
 
-				@Override
-				public void run() {
-					try {
-						broadcastSocket.send(discovermsg);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+			{
+				discoverCommand.setName(CommandEnum.DISCOVER);
+				List<String> params = new ArrayList<String>();
+				params.add(NetworkUtils.getIpAddress().getHostAddress());
+				params.add("12345");
+				discoverCommand.setParams(params);
+				byte[] buf = SerializationUtils.serialize(discoverCommand);
+				discoverMsg = new DatagramPacket(buf, buf.length, NetworkUtils.getBroadcastIpAddress(), 54321);
+			}
+
+			@Override
+			public void run() {
+				try {
+					broadcastSocket.send(discoverMsg);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			};
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+			}
+		};
+
 	}
 
 	/**
