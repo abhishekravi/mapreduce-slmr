@@ -1,12 +1,14 @@
 package neu.mr.client;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +29,8 @@ public class ServerInfo {
 	public boolean alive;
 	private ServerSocket serverSocket;
 	private Socket connection;
-	private ObjectInputStream in;
-	private ObjectOutputStream out;
+	private BufferedInputStream in;
+	private BufferedOutputStream out;
 	private Thread commandListener;
 
 	public InetAddress getAddress() {
@@ -60,10 +62,12 @@ public class ServerInfo {
 	 */
 	public void startTcpConnectionWithServer() {
 		try {
-			serverSocket = new ServerSocket(54321);
+			serverSocket = new ServerSocket(54322);
 			connection = serverSocket.accept();
-			in = new ObjectInputStream(connection.getInputStream());
-			out = new ObjectOutputStream(connection.getOutputStream());
+			in = new BufferedInputStream(connection.getInputStream());
+			out = new BufferedOutputStream(connection.getOutputStream());
+			
+			LOGGER.info("Client created input/output streams to the client on tcp");
 			commandListener = new Thread(new CommandListener());
 			commandListener.start();
 		} catch (IOException e) {
@@ -79,17 +83,18 @@ public class ServerInfo {
 	 */
 	private class CommandListener implements Runnable {
 		Command command;
+		byte[] packet = new byte[1024];
 
 		@Override
 		public void run() {
 			while (alive) {
 				try {
-					command = (Command) in.readObject();
+					in.read(packet);
+					command = (Command) SerializationUtils.deserialize(packet);
+					LOGGER.info("Received command from server " + command);
 					command.getName().run();
 				} catch (IOException e) {
 					LOGGER.error("IOException while reading from input stream in ServerInfo", e);
-				} catch (ClassNotFoundException e) {
-					LOGGER.error("ClassNotFoundException while reading from input stream in ServerInfo", e);
 				}
 			}
 		}
@@ -99,9 +104,9 @@ public class ServerInfo {
 	 * Send a command to the server
 	 * @param command
 	 */
-	public void writeToOutputStream(Command command){
+	public void writeToOutputStream(byte[] command){
 		try {
-			out.writeObject(command);
+			out.write(ArrayUtils.addAll(command, "\n".getBytes()));
 			out.flush();
 		} catch (IOException e) {
 			LOGGER.error("IOException while writing to output stream in ServerInfo", e);

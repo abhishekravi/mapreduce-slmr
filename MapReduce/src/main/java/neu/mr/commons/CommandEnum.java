@@ -5,6 +5,7 @@ import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +34,6 @@ public enum CommandEnum implements CommandExecutor {
 			CommandExecutorUtils.sendDiscoveryAck(serverInfo, socket);
 			socket.close();
 			serverInfo.startTcpConnectionWithServer();
-			Command blah = new Command();
-			blah.setName(CommandEnum.BLAH);
-			serverInfo.writeToOutputStream(blah);
 		}
 	},
 	/**
@@ -50,19 +48,14 @@ public enum CommandEnum implements CommandExecutor {
 			List<ConnectedClient> connectedClients = (List<ConnectedClient>) parameters.get(1);
 
 			ConnectedClient client = new ConnectedClient();
+			Command replyCommand = (Command) SerializationUtils.deserialize(replyPacket.getData());
 			client.address = replyPacket.getAddress();
-			client.portNumber = replyPacket.getPort();
+			client.portNumber = Integer.parseInt(replyCommand.params.get(0));
 			client.alive = true;
 			client.startTcpConnectionWithClient();
 			connectedClients.add(client);
 			LOGGER.info("client address:" + replyPacket.getAddress().getHostAddress());
 			LOGGER.info("client port:" + replyPacket.getPort());
-		}
-	},
-	BLAH("Connected!"){
-		@Override
-		public void run() {
-			System.out.println("Ohk buddy we are connected");
 		}
 	};
 

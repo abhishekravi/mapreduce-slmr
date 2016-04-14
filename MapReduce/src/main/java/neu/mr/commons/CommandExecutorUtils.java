@@ -37,7 +37,7 @@ public class CommandExecutorUtils {
 			Command discoveryAck = new Command();
 			discoveryAck.setName(CommandEnum.DISCOVER_ACK);
 			List<String> params = new ArrayList<String>();
-			params.add("54321");
+			params.add("54322");
 			discoveryAck.setParams(params);
 			byte[] reply = SerializationUtils.serialize(discoveryAck);
 			DatagramPacket discoveryAckPacket = new DatagramPacket(reply, reply.length, serverInfo.address,

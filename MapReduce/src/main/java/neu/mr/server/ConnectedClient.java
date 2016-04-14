@@ -1,11 +1,12 @@
 package neu.mr.server;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +26,8 @@ public class ConnectedClient {
 	public int portNumber;
 	public boolean alive;
 	private Socket socket;
-	private ObjectInputStream in;
-	private ObjectOutputStream out;
+	private InputStream in;
+	private OutputStream out;
 	private Thread commandListener;
 
 	public InetAddress getAddress() {
@@ -59,9 +60,10 @@ public class ConnectedClient {
 	public void startTcpConnectionWithClient() {
 		try {
 			socket = new Socket(address, portNumber);
+			in = socket.getInputStream();
+			out = socket.getOutputStream();
 			
-			in = new ObjectInputStream(socket.getInputStream());
-			out = new ObjectOutputStream(socket.getOutputStream());
+			LOGGER.info("Server created input/output streams to the client on tcp");
 			commandListener = new Thread(new CommandListener());
 			commandListener.start();
 		} catch (IOException e) {
@@ -77,18 +79,18 @@ public class ConnectedClient {
 	 */
 	private class CommandListener implements Runnable {
 		Command command;
-
+		byte[] packet = new byte[1024];
+		
 		@Override
 		public void run() {
 			while (alive) {
 				try {
-					command = (Command) in.readObject();
-					System.out.println("Got command " + command.getName().toString());
+					in.read(packet);
+					command = (Command) SerializationUtils.deserialize(packet);
+					LOGGER.info("Received command from client " + command);
 					command.getName().run();
 				} catch (IOException e) {
 					LOGGER.error("IOException while reading from input stream in ConnectedClient", e);
-				} catch (ClassNotFoundException e) {
-					LOGGER.error("ClassNotFoundException while reading from input stream in ConnectedClient", e);
 				}
 			}
 		}
@@ -100,7 +102,7 @@ public class ConnectedClient {
 	 */
 	public void writeToOutputStream(Command command) {
 		try {
-			out.writeObject(command);
+			out.write(SerializationUtils.serialize(command));
 			out.flush();
 		} catch (IOException e) {
 			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);

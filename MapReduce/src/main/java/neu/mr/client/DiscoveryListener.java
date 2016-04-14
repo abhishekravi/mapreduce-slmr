@@ -74,7 +74,8 @@ public class DiscoveryListener {
 					socket.receive(receivedPacket);
 					Command command = (Command) SerializationUtils.deserialize(receivedPacket.getData());
 					if (CommandEnum.DISCOVER.toString().equals(command.getName().toString())) {
-						LOGGER.info("command received:" + command.getName().toString());
+						discovered = true;
+						LOGGER.info("Command received:" + command.getName().toString());
 						List<Object> runParams = new ArrayList<Object>();
 						runParams.add(receivedPacket);
 						runParams.add(serverInfo);
