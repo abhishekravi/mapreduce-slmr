@@ -75,42 +75,18 @@ public class DiscoveryListener {
 					Command command = (Command) SerializationUtils.deserialize(receivedPacket.getData());
 					if (CommandEnum.DISCOVER.toString().equals(command.getName().toString())) {
 						LOGGER.info("command received:" + command.getName().toString());
-						sendDiscoveryAck(receivedPacket);
-						discovered = true;
-						socket.close();
+						List<Object> runParams = new ArrayList<Object>();
+						runParams.add(receivedPacket);
+						runParams.add(serverInfo);
+						runParams.add(socket);
+						command.getName().parameters = runParams;
+						command.getName().run();
 					}
 				} catch (IOException e) {
-					LOGGER.error("exception when getting discovery packet", e);
+					LOGGER.error("Exception while hearing for discovery packet", e);
 				}
 			}
 		}
 		
-		/**
-		 * Sends back the discovery ack with the port
-		 * on which this client is hearing for commands from
-		 * the server
-		 * @param packet
-		 */
-		private void sendDiscoveryAck(DatagramPacket packet) {
-			try {
-				serverInfo.address = packet.getAddress();
-				serverInfo.portNumber = packet.getPort();
-				LOGGER.info("Address - " + serverInfo.address.getHostAddress());
-				LOGGER.info("Port - " + serverInfo.portNumber);
-				
-				Command discoveryAck = new Command();
-				discoveryAck.setName(CommandEnum.DISCOVER_ACK);
-				List<String> params = new ArrayList<String>();
-				params.add("54321");
-				discoveryAck.setParams(params);
-				byte[] reply = SerializationUtils.serialize(discoveryAck);
-				DatagramPacket discoveryAckPacket = 
-						new DatagramPacket(reply, reply.length, serverInfo.address, serverInfo.portNumber);
-				socket.send(discoveryAckPacket);
-			} catch (IOException e) {
-				LOGGER.error("exception when sending ack", e);
-			}
-		}
-
 	}
 }

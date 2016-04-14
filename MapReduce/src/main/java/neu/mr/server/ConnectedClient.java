@@ -1,21 +1,33 @@
 package neu.mr.server;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.Socket;
 
-import neu.mr.commons.CommanExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import neu.mr.commons.Command;
 
 /**
  * This class represents a connected client.
+ * 
  * @author Abhishek Ravichandran
  *
  */
 public class ConnectedClient {
 
-	InetAddress address;
-	int portNumber;
-	boolean alive;
-	Thread executor = new Thread(new CommanExecutor());
+	private static Logger LOGGER = LoggerFactory.getLogger(ConnectedClient.class);
 	
+	public InetAddress address;
+	public int portNumber;
+	public boolean alive;
+	private Socket socket;
+	private ObjectInputStream in;
+	private ObjectOutputStream out;
+	private Thread commandListener;
 
 	public InetAddress getAddress() {
 		return address;
@@ -39,6 +51,47 @@ public class ConnectedClient {
 
 	public void setAlive(boolean alive) {
 		this.alive = alive;
+	}
+
+	public void startTcpConnectionWithClient() {
+		try {
+			socket = new Socket(address, portNumber);
+			
+			in = new ObjectInputStream(socket.getInputStream());
+			out = new ObjectOutputStream(socket.getOutputStream());
+			commandListener = new Thread(new CommandListener());
+			commandListener.start();
+		} catch (IOException e) {
+			LOGGER.error("Exception starting a TCP connection with the server", e);
+		}
+	}
+
+	private class CommandListener implements Runnable {
+		Command command;
+
+		@Override
+		public void run() {
+			while (alive) {
+				try {
+					command = (Command) in.readObject();
+					System.out.println("Got command " + command.getName().toString());
+					command.getName().run();
+				} catch (IOException e) {
+					LOGGER.error("IOException while reading from input stream in ConnectedClient", e);
+				} catch (ClassNotFoundException e) {
+					LOGGER.error("ClassNotFoundException while reading from input stream in ConnectedClient", e);
+				}
+			}
+		}
+	}
+
+	public void writeToOutputStream(Command command) {
+		try {
+			out.writeObject(command);
+			out.flush();
+		} catch (IOException e) {
+			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);
+		}
 	}
 
 }

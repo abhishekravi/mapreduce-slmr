@@ -1,0 +1,50 @@
+package neu.mr.commons;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.SerializationUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import neu.mr.client.ServerInfo;
+
+public class CommandExecutorUtils {
+
+	private static Logger LOGGER = LoggerFactory.getLogger(CommandExecutorUtils.class);
+
+	/**
+	 * Sends back the discovery ack with the port on which this client is
+	 * hearing for commands from the server
+	 * 
+	 * @param packet
+	 */
+	public static void sendDiscoveryAck(ServerInfo serverInfo, DatagramSocket socket) {
+		try {
+			
+			LOGGER.info("Address - " + serverInfo.address.getHostAddress());
+			LOGGER.info("Port - " + serverInfo.portNumber);
+
+			Command discoveryAck = new Command();
+			discoveryAck.setName(CommandEnum.DISCOVER_ACK);
+			List<String> params = new ArrayList<String>();
+			params.add("54321");
+			discoveryAck.setParams(params);
+			byte[] reply = SerializationUtils.serialize(discoveryAck);
+			DatagramPacket discoveryAckPacket = new DatagramPacket(reply, reply.length, serverInfo.address,
+					serverInfo.portNumber);
+			socket.send(discoveryAckPacket);
+		} catch (IOException e) {
+			LOGGER.error("exception when sending ack", e);
+		}
+	}
+	
+	public static void initializeServer(ServerInfo serverInfo, DatagramPacket packet){
+		serverInfo.address = packet.getAddress();
+		serverInfo.alive = true;
+		serverInfo.portNumber = packet.getPort();
+	}
+}

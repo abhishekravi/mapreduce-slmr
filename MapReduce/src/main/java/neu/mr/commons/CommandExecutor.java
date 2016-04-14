@@ -5,10 +5,8 @@ package neu.mr.commons;
  * @author Abhishek Ravichandran
  *
  */
-public class CommanExecutor implements Runnable{
+public interface CommandExecutor{
 
-	public void run() {
-		
-	}
+	public void run();
 
 }

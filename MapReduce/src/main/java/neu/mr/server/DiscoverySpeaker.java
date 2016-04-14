@@ -3,6 +3,7 @@ package neu.mr.server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -29,7 +30,7 @@ public class DiscoverySpeaker {
 	TimerTask speakerTask;
 	Timer speaker;
 	DatagramSocket broadcastSocket;
-	List<ConnectedClient> connecteClients;
+	List<ConnectedClient> connectedClients;
 
 	/**
 	 * Initialize the speaker & ackListener threads. Also create a scheduled task
@@ -69,7 +70,7 @@ public class DiscoverySpeaker {
 	 */
 	public void start(List<ConnectedClient> connecteClients) {
 		ackListener.start();
-		this.connecteClients = connecteClients;
+		this.connectedClients = connecteClients;
 		speaker.schedule(speakerTask, 0, 500);
 	}
 
@@ -83,7 +84,6 @@ public class DiscoverySpeaker {
 	 */
 	private class ListenerRunnable implements Runnable {
 
-		ConnectedClient client;
 		public void run() {
 			try {
 				// DatagramSocket socket = new DatagramSocket();
@@ -92,15 +92,14 @@ public class DiscoverySpeaker {
 				Command replyCommand;
 				while(true){
 					broadcastSocket.receive(replypacket);
-					client = new ConnectedClient();
 					replyCommand = (Command) SerializationUtils.deserialize(replypacket.getData());
-					client.address = replypacket.getAddress();
-					client.portNumber = replypacket.getPort();
-					client.alive = true;
-					LOGGER.info("client address:" + replypacket.getAddress().getHostAddress());
-					LOGGER.info("client port:" + replypacket.getPort());
+					
+					List<Object> runParams = new ArrayList<Object>();
+					runParams.add(replypacket);
+					runParams.add(connectedClients);
+					replyCommand.getName().parameters = runParams;
+					replyCommand.getName().run();
 					LOGGER.info("reply message:" + replyCommand);
-					connecteClients.add(client);
 				}
 			} catch (IOException e) {
 				LOGGER.error("exception when sending broadcast message", e);
