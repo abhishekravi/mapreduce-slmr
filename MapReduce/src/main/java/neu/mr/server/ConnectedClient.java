@@ -53,6 +53,9 @@ public class ConnectedClient {
 		this.alive = alive;
 	}
 
+	/**
+	 * Start a tcp connection with the new discovered client
+	 */
 	public void startTcpConnectionWithClient() {
 		try {
 			socket = new Socket(address, portNumber);
@@ -66,6 +69,12 @@ public class ConnectedClient {
 		}
 	}
 
+	/**
+	 * Runnable class for the listener thread that hears to the 
+	 * commands that the client would send on the tcp connection
+	 * @author chintanpathak
+	 *
+	 */
 	private class CommandListener implements Runnable {
 		Command command;
 
@@ -85,6 +94,10 @@ public class ConnectedClient {
 		}
 	}
 
+	/**
+	 * Send a command to the client
+	 * @param command
+	 */
 	public void writeToOutputStream(Command command) {
 		try {
 			out.writeObject(command);

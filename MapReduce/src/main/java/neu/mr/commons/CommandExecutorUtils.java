@@ -12,6 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import neu.mr.client.ServerInfo;
 
+/**
+ * Helper methods for command execution
+ * 
+ * @author chintanpathak
+ *
+ */
 public class CommandExecutorUtils {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(CommandExecutorUtils.class);
@@ -24,7 +30,7 @@ public class CommandExecutorUtils {
 	 */
 	public static void sendDiscoveryAck(ServerInfo serverInfo, DatagramSocket socket) {
 		try {
-			
+
 			LOGGER.info("Address - " + serverInfo.address.getHostAddress());
 			LOGGER.info("Port - " + serverInfo.portNumber);
 
@@ -41,8 +47,15 @@ public class CommandExecutorUtils {
 			LOGGER.error("exception when sending ack", e);
 		}
 	}
-	
-	public static void initializeServer(ServerInfo serverInfo, DatagramPacket packet){
+
+	/**
+	 * Initializes the serverInfo object with the address and port number of the
+	 * server
+	 * 
+	 * @param serverInfo
+	 * @param packet
+	 */
+	public static void initializeServer(ServerInfo serverInfo, DatagramPacket packet) {
 		serverInfo.address = packet.getAddress();
 		serverInfo.alive = true;
 		serverInfo.portNumber = packet.getPort();

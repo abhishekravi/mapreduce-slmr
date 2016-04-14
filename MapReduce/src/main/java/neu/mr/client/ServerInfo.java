@@ -55,6 +55,9 @@ public class ServerInfo {
 		this.alive = alive;
 	}
 
+	/**
+	 * Start a tcp connection with the server
+	 */
 	public void startTcpConnectionWithServer() {
 		try {
 			serverSocket = new ServerSocket(54321);
@@ -68,6 +71,12 @@ public class ServerInfo {
 		}
 	}
 
+	/**
+	 * Runnable class that hears to the commands that 
+	 * the server would send on the tcp connection
+	 * @author chintanpathak
+	 *
+	 */
 	private class CommandListener implements Runnable {
 		Command command;
 
@@ -86,6 +95,10 @@ public class ServerInfo {
 		}
 	}
 	
+	/**
+	 * Send a command to the server
+	 * @param command
+	 */
 	public void writeToOutputStream(Command command){
 		try {
 			out.writeObject(command);

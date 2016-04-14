@@ -19,6 +19,10 @@ import neu.mr.server.ConnectedClient;
  */
 public enum CommandEnum implements CommandExecutor {
 
+	/**
+	 * Send back a discovery ack, populate the serverInfo object
+	 * and start a TCP connection with the server
+	 */
 	DISCOVER("discover") {
 		@Override
 		public void run() {
@@ -34,6 +38,10 @@ public enum CommandEnum implements CommandExecutor {
 			serverInfo.writeToOutputStream(blah);
 		}
 	},
+	/**
+	 * Create a new connected client, start a TCP connection with it and
+	 * add it to the connected-clients list inside the server
+	 */
 	DISCOVER_ACK("discover_ack") {
 		@Override
 		public void run() {
