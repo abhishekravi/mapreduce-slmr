@@ -2,14 +2,28 @@ package neu.mr.client;
 
 /**
  * Main class for the client
- * @author chintanpathak
+ * @author chintanpathak, Abhishek Ravichandran
  *
  */
 public class Client {
-
-	public static void main(String[] args) {
-		DiscoveryListener discoveryListener = new DiscoveryListener();
-		discoveryListener.start();
+	
+	DiscoveryListener discoveryListener;
+	ServerInfo serverInfo;
+	
+	/**
+	 * constructor to initialize a client.
+	 */
+	public Client(){
+		this.discoveryListener = new DiscoveryListener();
+		this.serverInfo = new ServerInfo();
+	}
+	
+	/**
+	 * method to start client's execution.
+	 */
+	public void execute(){
+		this.discoveryListener.start(this.serverInfo);
+		
 	}
 
 }

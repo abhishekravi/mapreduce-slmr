@@ -3,10 +3,13 @@ package neu.mr.server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.commons.lang.SerializationUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import neu.mr.commons.Command;
 import neu.mr.commons.CommandEnum;
@@ -14,17 +17,19 @@ import neu.mr.utils.NetworkUtils;
 
 /**
  * Server side class that is responsible for periodically sending the discovery
- * packets to the possible clients
+ * packets to the possible clients.
  * 
- * @author chintanpathak
+ * @author chintanpathak, Abhishek Ravichandran
  *
  */
 public class DiscoverySpeaker {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(DiscoverySpeaker.class);
 	Thread ackListener;
 	TimerTask speakerTask;
 	Timer speaker;
 	DatagramSocket broadcastSocket;
+	List<ConnectedClient> connecteClients;
 
 	/**
 	 * Initialize the speaker & ackListener threads. Also create a scheduled task
@@ -50,7 +55,7 @@ public class DiscoverySpeaker {
 				try {
 					broadcastSocket.send(discoverMsg);
 				} catch (IOException e) {
-					e.printStackTrace();
+					LOGGER.error("exception when sending broadcast message", e);
 				}
 			}
 		};
@@ -60,9 +65,11 @@ public class DiscoverySpeaker {
 	/**
 	 * Start the speaker thread and start sending the broadcast messages at
 	 * fixed time intervals
+	 * @param clients 
 	 */
-	public void start() {
+	public void start(List<ConnectedClient> connecteClients) {
 		ackListener.start();
+		this.connecteClients = connecteClients;
 		speaker.schedule(speakerTask, 0, 500);
 	}
 
@@ -76,6 +83,7 @@ public class DiscoverySpeaker {
 	 */
 	private class ListenerRunnable implements Runnable {
 
+		ConnectedClient client;
 		public void run() {
 			try {
 				// DatagramSocket socket = new DatagramSocket();
@@ -84,13 +92,18 @@ public class DiscoverySpeaker {
 				Command replyCommand;
 				while(true){
 					broadcastSocket.receive(replypacket);
+					client = new ConnectedClient();
 					replyCommand = (Command) SerializationUtils.deserialize(replypacket.getData());
-					System.out.println(replypacket.getAddress());
-					System.out.println(replypacket.getPort());
-					System.out.println(replyCommand);
+					client.address = replypacket.getAddress();
+					client.portNumber = replypacket.getPort();
+					client.alive = true;
+					LOGGER.info("client address:" + replypacket.getAddress().getHostAddress());
+					LOGGER.info("client port:" + replypacket.getPort());
+					LOGGER.info("reply message:" + replyCommand);
+					connecteClients.add(client);
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOGGER.error("exception when sending broadcast message", e);
 			}
 		}
 	}
@@ -103,7 +116,7 @@ public class DiscoverySpeaker {
 			broadcastSocket = new DatagramSocket();
 			broadcastSocket.setBroadcast(true);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.error("exception when creating datagram socket", e);
 		}
 	}
 }
