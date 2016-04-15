@@ -5,12 +5,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neu.mr.commons.Command;
+import neu.mr.commons.CommandEnum;
 
 /**
  * This class represents a connected client.
@@ -21,7 +27,7 @@ import neu.mr.commons.Command;
 public class ConnectedClient {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ConnectedClient.class);
-	
+
 	public InetAddress address;
 	public int portNumber;
 	public boolean alive;
@@ -29,6 +35,32 @@ public class ConnectedClient {
 	private InputStream in;
 	private OutputStream out;
 	private Thread commandListener;
+	private long lastCommTime;
+	private TimerTask heartBeatTask;
+	private Timer heartBeatTimer;
+	private Command heartBeat;
+
+	/**
+	 * method to start heart beat mechanism.
+	 */
+	public void startHeartBeat() {
+		heartBeat = new Command();
+		heartBeat.setName(CommandEnum.HEARTBEAT);
+		heartBeatTimer = new Timer();
+		heartBeatTask = new TimerTask() {
+			@Override
+			public void run() {
+				writeToOutputStream(heartBeat);
+				LOGGER.info("heartbeat");
+			}
+		};
+		heartBeatTimer.schedule(heartBeatTask, 0, 5000);
+	}
+
+	public ConnectedClient getClient() {
+		// TODO Auto-generated method stub
+		return this;
+	}
 
 	public InetAddress getAddress() {
 		return address;
@@ -54,6 +86,14 @@ public class ConnectedClient {
 		this.alive = alive;
 	}
 
+	public long getLastCommTime() {
+		return lastCommTime;
+	}
+
+	public void setLastCommTime(long lastCommTime) {
+		this.lastCommTime = lastCommTime;
+	}
+
 	/**
 	 * Start a tcp connection with the new discovered client
 	 */
@@ -62,32 +102,41 @@ public class ConnectedClient {
 			socket = new Socket(address, portNumber);
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
-			
+
 			LOGGER.info("Server created input/output streams to the client on tcp");
 			commandListener = new Thread(new CommandListener());
 			commandListener.start();
+			this.startHeartBeat();
 		} catch (IOException e) {
 			LOGGER.error("Exception starting a TCP connection with the server", e);
 		}
 	}
 
 	/**
-	 * Runnable class for the listener thread that hears to the 
-	 * commands that the client would send on the tcp connection
+	 * Runnable class for the listener thread that hears to the commands that
+	 * the client would send on the tcp connection
+	 * 
 	 * @author chintanpathak
 	 *
 	 */
 	private class CommandListener implements Runnable {
 		Command command;
 		byte[] packet = new byte[1024];
-		
+
 		@Override
 		public void run() {
 			while (alive) {
 				try {
+					long timeSinceComm = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - lastCommTime);
+					LOGGER.info("time:" + timeSinceComm);
+					if (timeSinceComm > 2)
+						alive = false;
 					in.read(packet);
 					command = (Command) SerializationUtils.deserialize(packet);
 					LOGGER.info("Received command from client " + command);
+					List<Object> runParams = new ArrayList<Object>();
+					runParams.add(getClient());
+					command.getName().parameters = runParams;
 					command.getName().run();
 				} catch (IOException e) {
 					LOGGER.error("IOException while reading from input stream in ConnectedClient", e);
@@ -98,6 +147,7 @@ public class ConnectedClient {
 
 	/**
 	 * Send a command to the client
+	 * 
 	 * @param command
 	 */
 	public void writeToOutputStream(Command command) {

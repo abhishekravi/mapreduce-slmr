@@ -6,8 +6,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,10 @@ public class ServerInfo {
 	private BufferedOutputStream out;
 	private Thread commandListener;
 
+	public ServerInfo getserver(){
+		return this;
+	}
+	
 	public InetAddress getAddress() {
 		return address;
 	}
@@ -92,6 +97,9 @@ public class ServerInfo {
 					in.read(packet);
 					command = (Command) SerializationUtils.deserialize(packet);
 					LOGGER.info("Received command from server " + command);
+					List<Object> runParams = new ArrayList<Object>();
+					runParams.add(getserver());
+					command.getName().parameters = runParams;
 					command.getName().run();
 				} catch (IOException e) {
 					LOGGER.error("IOException while reading from input stream in ServerInfo", e);
@@ -101,15 +109,15 @@ public class ServerInfo {
 	}
 	
 	/**
-	 * Send a command to the server
+	 * Send a command to the client
 	 * @param command
 	 */
-	public void writeToOutputStream(byte[] command){
+	public void writeToOutputStream(Command command) {
 		try {
-			out.write(ArrayUtils.addAll(command, "\n".getBytes()));
+			out.write(SerializationUtils.serialize(command));
 			out.flush();
 		} catch (IOException e) {
-			LOGGER.error("IOException while writing to output stream in ServerInfo", e);
+			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);
 		}
 	}
 }

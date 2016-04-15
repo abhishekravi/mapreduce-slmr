@@ -12,7 +12,7 @@ import neu.mr.server.Server;
  * @author Abhishek Ravichandran
  *
  */
-public class MapReduce {
+class MapReduce {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(MapReduce.class);
 

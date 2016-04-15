@@ -3,6 +3,9 @@ package neu.mr.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Main class for the server
  * @author chintanpathak, Abhishek Ravichandran
@@ -10,6 +13,7 @@ import java.util.List;
  */
 public class Server {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(Server.class);
 	List<ConnectedClient> connectedClients;
 	DiscoverySpeaker discovery;
 	
@@ -26,6 +30,9 @@ public class Server {
 	 */
 	public void execute () {
 		this.discovery.start(connectedClients);
+		while(this.connectedClients.isEmpty())
+			LOGGER.debug("waiting for clients");
+		System.out.println("got a client");
 		// Now start sending the required commands to execute 
 		// jobs on the client machine here
 		// --------- What comes here?

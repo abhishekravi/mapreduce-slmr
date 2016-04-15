@@ -57,6 +57,31 @@ public enum CommandEnum implements CommandExecutor {
 			LOGGER.info("client address:" + replyPacket.getAddress().getHostAddress());
 			LOGGER.info("client port:" + replyPacket.getPort());
 		}
+	},
+	
+	/**
+	 * Heartbeat command send by server to check status of client.
+	 */
+	HEARTBEAT("status_check") {
+		@Override
+		public void run() {
+			ServerInfo server = (ServerInfo) parameters.get(0);
+			Command c = new Command();
+			c.setName(HEARTBEAT_ACK);
+			server.writeToOutputStream(c);
+		}
+	},
+	
+	/**
+	 * Heartbeat acknowledgement command from the client.
+	 */
+	HEARTBEAT_ACK("status_ack") {
+		@Override
+		public void run() {
+			ConnectedClient c = (ConnectedClient) parameters.get(0);
+			c.setLastCommTime(System.currentTimeMillis());
+			LOGGER.info("client alive");
+		}
 	};
 
 	private static Logger LOGGER = LoggerFactory.getLogger(CommandEnum.class);
