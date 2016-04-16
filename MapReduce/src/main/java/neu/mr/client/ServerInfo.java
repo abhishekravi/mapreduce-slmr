@@ -34,10 +34,10 @@ public class ServerInfo {
 	private BufferedOutputStream out;
 	private Thread commandListener;
 
-	public ServerInfo getserver(){
+	public ServerInfo getserver() {
 		return this;
 	}
-	
+
 	public InetAddress getAddress() {
 		return address;
 	}
@@ -71,7 +71,7 @@ public class ServerInfo {
 			connection = serverSocket.accept();
 			in = new BufferedInputStream(connection.getInputStream());
 			out = new BufferedOutputStream(connection.getOutputStream());
-			
+
 			LOGGER.info("Client created input/output streams to the client on tcp");
 			commandListener = new Thread(new CommandListener());
 			commandListener.start();
@@ -81,14 +81,15 @@ public class ServerInfo {
 	}
 
 	/**
-	 * Runnable class that hears to the commands that 
-	 * the server would send on the tcp connection
+	 * Runnable class that hears to the commands that the server would send on
+	 * the tcp connection
+	 * 
 	 * @author chintanpathak
 	 *
 	 */
 	private class CommandListener implements Runnable {
 		Command command;
-		byte[] packet = new byte[1024];
+		byte[] packet = new byte[512];
 
 		@Override
 		public void run() {
@@ -107,9 +108,10 @@ public class ServerInfo {
 			}
 		}
 	}
-	
+
 	/**
 	 * Send a command to the client
+	 * 
 	 * @param command
 	 */
 	public void writeToOutputStream(Command command) {

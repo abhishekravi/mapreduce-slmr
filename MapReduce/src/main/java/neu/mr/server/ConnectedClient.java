@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
@@ -35,7 +34,7 @@ public class ConnectedClient {
 	private InputStream in;
 	private OutputStream out;
 	private Thread commandListener;
-	private long lastCommTime;
+	private long lastCommTime = System.currentTimeMillis();
 	private TimerTask heartBeatTask;
 	private Timer heartBeatTimer;
 	private Command heartBeat;
@@ -50,11 +49,17 @@ public class ConnectedClient {
 		heartBeatTask = new TimerTask() {
 			@Override
 			public void run() {
+				long timeSinceComm = (System.currentTimeMillis() - lastCommTime) / 1000;
+				LOGGER.info("time:" + timeSinceComm);
+				if (timeSinceComm >= 35){
+					alive = false;
+					heartBeatTask.cancel();
+				}
 				writeToOutputStream(heartBeat);
 				LOGGER.info("heartbeat");
 			}
 		};
-		heartBeatTimer.schedule(heartBeatTask, 0, 5000);
+		heartBeatTimer.schedule(heartBeatTask, 0, 30000);
 	}
 
 	public ConnectedClient getClient() {
@@ -127,11 +132,9 @@ public class ConnectedClient {
 		public void run() {
 			while (alive) {
 				try {
-					long timeSinceComm = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - lastCommTime);
-					LOGGER.info("time:" + timeSinceComm);
-					if (timeSinceComm > 2)
-						alive = false;
-					in.read(packet);
+					packet = new byte[1024];
+					in.read(packet, 0, packet.length);
+					lastCommTime = System.currentTimeMillis();
 					command = (Command) SerializationUtils.deserialize(packet);
 					LOGGER.info("Received command from client " + command);
 					List<Object> runParams = new ArrayList<Object>();
@@ -152,8 +155,10 @@ public class ConnectedClient {
 	 */
 	public void writeToOutputStream(Command command) {
 		try {
-			out.write(SerializationUtils.serialize(command));
-			out.flush();
+			if (alive) {
+				out.write(SerializationUtils.serialize(command));
+				out.flush();
+			}
 		} catch (IOException e) {
 			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);
 		}
