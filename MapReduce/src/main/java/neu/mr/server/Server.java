@@ -6,6 +6,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neu.mr.job.JobScheduler;
+
 /**
  * Main class for the server
  * @author chintanpathak, Abhishek Ravichandran
@@ -16,11 +18,13 @@ public class Server {
 	private static Logger LOGGER = LoggerFactory.getLogger(Server.class);
 	List<ConnectedClient> connectedClients;
 	DiscoverySpeaker discovery;
+	JobScheduler jobScheduler;
 	
 	/**
 	 * constructor to initialize the server
 	 */
-	public Server(){
+	public Server(JobScheduler jobScheduler){
+		this.jobScheduler = jobScheduler;
 		this.discovery = new DiscoverySpeaker();
 		this.connectedClients = new ArrayList<ConnectedClient>();
 	}
@@ -33,29 +37,8 @@ public class Server {
 		while(this.connectedClients.isEmpty())
 			LOGGER.debug("waiting for clients");
 		System.out.println("got a client");
-		// Now start sending the required commands to execute 
-		// jobs on the client machine here
-		// --------- What comes here?
-		// Job queue comes here 
-		// Scheduling jobs
-		// Heartbeat checking
-		// etc...
-		// --------------------------
-		// Use connectedClients.writeToOutputStream to
-		// send a command and add command implementations on
-		// client side to decide what is executed when this 
-		// command is received
-		// - Clients hear automatically and executes the command's
-		// run method whenever they hear a command 
-		
-		// To-do: Refactor command execution parameters in the enum 
-		// to take directly from command object
-		
-		// Possible options:
-		// 1) map command with mapper obj and file in it's parameters
-		// 2) reduce command with reducer obj and file in it's parameters
-		// 3) shuffle command with the location of files and keys to shuffle in 
-		// 	  it's parameters
+		jobScheduler.setConnectedClients(connectedClients);
+		jobScheduler.startScheduling();
 	}
 
 }

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import neu.mr.commons.Command;
 import neu.mr.commons.CommandEnum;
+import neu.mr.job.Job;
 
 /**
  * This class represents a connected client.
@@ -38,6 +39,12 @@ public class ConnectedClient {
 	private TimerTask heartBeatTask;
 	private Timer heartBeatTimer;
 	private Command heartBeat;
+	public boolean busy = false;
+	public List<Job> assignedJobs;
+
+	public ConnectedClient() {
+		assignedJobs = new ArrayList<Job>();
+	}
 
 	/**
 	 * method to start heart beat mechanism.
@@ -51,7 +58,7 @@ public class ConnectedClient {
 			public void run() {
 				long timeSinceComm = (System.currentTimeMillis() - lastCommTime) / 1000;
 				LOGGER.info("time:" + timeSinceComm);
-				if (timeSinceComm >= 35){
+				if (timeSinceComm >= 35) {
 					alive = false;
 					heartBeatTask.cancel();
 				}
@@ -137,9 +144,7 @@ public class ConnectedClient {
 					lastCommTime = System.currentTimeMillis();
 					command = (Command) SerializationUtils.deserialize(packet);
 					LOGGER.info("Received command from client " + command);
-					List<Object> runParams = new ArrayList<Object>();
-					runParams.add(getClient());
-					command.getName().parameters = runParams;
+					command.getName().parameters.add(getClient());
 					command.getName().run();
 				} catch (IOException e) {
 					LOGGER.error("IOException while reading from input stream in ConnectedClient", e);
@@ -161,6 +166,22 @@ public class ConnectedClient {
 			}
 		} catch (IOException e) {
 			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);
+		}
+	}
+
+	/**
+	 * Send the execute command to this client with the job object as it's payload
+	 */
+	public void sendExecuteCommand() {
+		if (!assignedJobs.isEmpty()) {
+			Command execute = new Command(CommandEnum.EXECUTE);
+			List<Object> runParams = new ArrayList<Object>();
+			runParams.add(assignedJobs);
+			execute.getName().parameters = runParams;
+			writeToOutputStream(execute);
+		} else {
+			LOGGER.error("Cannot send execute command to client - " + address.getHostAddress()
+					+ " as the assignedJobs list is empty for it");
 		}
 	}
 

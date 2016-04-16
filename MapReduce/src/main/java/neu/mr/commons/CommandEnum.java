@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neu.mr.client.ServerInfo;
+import neu.mr.job.Job;
 import neu.mr.server.ConnectedClient;
 
 /**
@@ -82,6 +83,26 @@ public enum CommandEnum implements CommandExecutor {
 			c.setLastCommTime(System.currentTimeMillis());
 			LOGGER.info("client alive");
 		}
+	},
+	/**
+	 * Command for job execution
+	 */
+	EXECUTE("execute_job") {
+
+		@Override
+		public void run() {
+			List<Job> list = (List<Job>) parameters.get(1);
+			Job jobToRun = list.get(0);
+			jobToRun.helloWorld();
+		}
+	},
+	EXECUTE_ACK("execute_ack"){
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			
+		}
+		
 	};
 
 	private static Logger LOGGER = LoggerFactory.getLogger(CommandEnum.class);

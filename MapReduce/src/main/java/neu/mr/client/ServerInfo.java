@@ -98,9 +98,7 @@ public class ServerInfo {
 					in.read(packet);
 					command = (Command) SerializationUtils.deserialize(packet);
 					LOGGER.info("Received command from server " + command);
-					List<Object> runParams = new ArrayList<Object>();
-					runParams.add(getserver());
-					command.getName().parameters = runParams;
+					command.getName().parameters.add(getserver());
 					command.getName().run();
 				} catch (IOException e) {
 					LOGGER.error("IOException while reading from input stream in ServerInfo", e);
