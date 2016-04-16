@@ -6,6 +6,8 @@ import java.io.InputStream;
 //package utils.aws.s3;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +17,11 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
 
@@ -98,5 +103,28 @@ public class AwsUtil {
 		} catch (AmazonClientException | InterruptedException e) {
 			LOGGER.error("error when writing to s3", e);
 		}
+	}
+	
+	/**
+	 * method to get list of files from s3 folder.
+	 * @param bucket
+	 * @param folder
+	 * @return
+	 * file list
+	 */
+	public List<String> getFileList(String bucket, String folder){
+		List<String> fileList = new ArrayList<String>();
+		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().
+			    withBucketName(bucket).withPrefix(folder));
+		for(S3ObjectSummary s : objectListing.getObjectSummaries()){
+			fileList.add(s.getKey());
+			LOGGER.info("file:" + s.getKey());
+		}
+		return fileList;
+	}
+	
+	public static void main(String[] args) {
+		AwsUtil a = new AwsUtil("AKIAJG5UIGP6SQUW7OBA","+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
+		a.getFileList("chintan-test-sackett", "finaloutputA9");
 	}
 }
