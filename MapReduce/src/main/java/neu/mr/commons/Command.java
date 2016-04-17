@@ -3,11 +3,13 @@ package neu.mr.commons;
 import java.io.Serializable;
 import java.util.List;
 
+import neu.mr.job.Job;
+
 /**
  * Class to hold the command information that a server and client would use for
  * communication
  * 
- * @author chintanpathak
+ * @author chintanpathak, Abhsihek Ravichandran
  *
  */
 public class Command implements Serializable {
@@ -16,6 +18,15 @@ public class Command implements Serializable {
 
 	CommandEnum name;
 	List<String> params;
+	List<Job> jobs;
+
+	public List<Job> getJobs() {
+		return jobs;
+	}
+
+	public void setJobs(List<Job> jobs) {
+		this.jobs = jobs;
+	}
 
 	public Command(CommandEnum name) {
 		this.name = name;

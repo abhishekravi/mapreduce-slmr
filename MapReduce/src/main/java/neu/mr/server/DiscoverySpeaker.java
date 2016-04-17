@@ -3,7 +3,6 @@ package neu.mr.server;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -93,11 +92,8 @@ public class DiscoverySpeaker {
 				while(true){
 					broadcastSocket.receive(replypacket);
 					replyCommand = (Command) SerializationUtils.deserialize(replypacket.getData());
-					
-					List<Object> runParams = new ArrayList<Object>();
-					runParams.add(replypacket);
-					runParams.add(connectedClients);
-					replyCommand.getName().parameters = runParams;
+					replyCommand.getName().parameters.add(replypacket);
+					replyCommand.getName().parameters.add(connectedClients);
 					replyCommand.getName().run();
 					LOGGER.info("reply message:" + replyCommand);
 				}

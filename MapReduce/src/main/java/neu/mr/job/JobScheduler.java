@@ -4,9 +4,15 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import neu.mr.server.ConnectedClient;
 
@@ -16,19 +22,24 @@ import neu.mr.server.ConnectedClient;
  *
  */
 public class JobScheduler {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(JobScheduler.class);
 
 	private List<ConnectedClient> connectedClients;
+	private Map<String, Job> jobMap;
 	public static Queue<Job> jobQueue;
 	private Thread schedulerThread;
 	private List<String> listOfInputFiles;
 
 	public JobScheduler() {
 		jobQueue = new LinkedList<Job>();
+		jobMap = new HashMap<String,Job>();
 	}
 
 	public JobScheduler(List<ConnectedClient> connectedClients) {
 		this.connectedClients = connectedClients;
 		jobQueue = new LinkedList<Job>();
+		jobMap = new HashMap<String,Job>();
 	}
 
 	public void startScheduling() {
@@ -41,12 +52,27 @@ public class JobScheduler {
 		@Override
 		public void run() {
 			while (true) {
+				removeDeadClients();
 				for (ConnectedClient client : connectedClients) {
 					if (!client.busy && !jobQueue.isEmpty()) {
-						client.assignedJobs.add(jobQueue.poll());
-						client.busy = true;
+						Job job = jobQueue.poll();
+						client.assignedJobs.add(job);
+						jobMap.put(client.address.getHostAddress(), job);
 						client.sendExecuteCommand();
 					}
+				}
+			}
+		}
+
+		/**
+		 * method to remove dead clients.
+		 */
+		private void removeDeadClients() {
+			Iterator<ConnectedClient> it = connectedClients.iterator();
+			while(it.hasNext()){
+				if(!it.next().alive){
+					LOGGER.info("removing client");
+					it.remove();
 				}
 			}
 		}

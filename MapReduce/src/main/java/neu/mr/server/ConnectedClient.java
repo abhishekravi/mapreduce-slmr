@@ -1,8 +1,10 @@
 package neu.mr.server;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -10,7 +12,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +33,10 @@ public class ConnectedClient {
 	public int portNumber;
 	public boolean alive;
 	private Socket socket;
-	private InputStream in;
-	private OutputStream out;
+	private BufferedInputStream in;
+	private ObjectInputStream oin;
+	private BufferedOutputStream out;
+	private ObjectOutputStream oout;
 	private Thread commandListener;
 	private long lastCommTime = System.currentTimeMillis();
 	private TimerTask heartBeatTask;
@@ -66,7 +69,7 @@ public class ConnectedClient {
 				LOGGER.info("heartbeat");
 			}
 		};
-		heartBeatTimer.schedule(heartBeatTask, 0, 30000);
+		heartBeatTimer.schedule(heartBeatTask, 5000, 30000);
 	}
 
 	public ConnectedClient getClient() {
@@ -112,9 +115,11 @@ public class ConnectedClient {
 	public void startTcpConnectionWithClient() {
 		try {
 			socket = new Socket(address, portNumber);
-			in = socket.getInputStream();
-			out = socket.getOutputStream();
-
+			out = new BufferedOutputStream(socket.getOutputStream());
+			oout = new ObjectOutputStream(out);
+			oout.flush();
+			in = new BufferedInputStream(socket.getInputStream());
+			oin = new ObjectInputStream(in);
 			LOGGER.info("Server created input/output streams to the client on tcp");
 			commandListener = new Thread(new CommandListener());
 			commandListener.start();
@@ -133,20 +138,18 @@ public class ConnectedClient {
 	 */
 	private class CommandListener implements Runnable {
 		Command command;
-		byte[] packet = new byte[1024];
 
 		@Override
 		public void run() {
 			while (alive) {
 				try {
-					packet = new byte[1024];
-					in.read(packet, 0, packet.length);
+					command = (Command) oin.readObject();
 					lastCommTime = System.currentTimeMillis();
-					command = (Command) SerializationUtils.deserialize(packet);
 					LOGGER.info("Received command from client " + command);
 					command.getName().parameters.add(getClient());
 					command.getName().run();
-				} catch (IOException e) {
+				} catch (IOException | ClassNotFoundException e) {
+					alive = false;
 					LOGGER.error("IOException while reading from input stream in ConnectedClient", e);
 				}
 			}
@@ -161,8 +164,8 @@ public class ConnectedClient {
 	public void writeToOutputStream(Command command) {
 		try {
 			if (alive) {
-				out.write(SerializationUtils.serialize(command));
-				out.flush();
+				oout.writeObject(command);
+				oout.flush();
 			}
 		} catch (IOException e) {
 			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);
@@ -170,14 +173,13 @@ public class ConnectedClient {
 	}
 
 	/**
-	 * Send the execute command to this client with the job object as it's payload
+	 * Send the execute command to this client with the job object as it's
+	 * payload
 	 */
 	public void sendExecuteCommand() {
 		if (!assignedJobs.isEmpty()) {
 			Command execute = new Command(CommandEnum.EXECUTE);
-			List<Object> runParams = new ArrayList<Object>();
-			runParams.add(assignedJobs);
-			execute.getName().parameters = runParams;
+			execute.setJobs(assignedJobs);
 			writeToOutputStream(execute);
 		} else {
 			LOGGER.error("Cannot send execute command to client - " + address.getHostAddress()

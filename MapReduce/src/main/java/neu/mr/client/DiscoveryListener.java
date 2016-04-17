@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
@@ -76,11 +74,9 @@ public class DiscoveryListener {
 					if (CommandEnum.DISCOVER.toString().equals(command.getName().toString())) {
 						discovered = true;
 						LOGGER.info("Command received:" + command.getName().toString());
-						List<Object> runParams = new ArrayList<Object>();
-						runParams.add(receivedPacket);
-						runParams.add(serverInfo);
-						runParams.add(socket);
-						command.getName().parameters = runParams;
+						command.getName().parameters.add(receivedPacket);
+						command.getName().parameters.add(serverInfo);
+						command.getName().parameters.add(socket);
 						command.getName().run();
 					}
 				} catch (IOException e) {

@@ -16,7 +16,7 @@ import neu.mr.server.ConnectedClient;
 /**
  * Enumeration class for different commands
  * 
- * @author chintanpathak
+ * @author chintanpathak, Abhishek Ravichandran
  *
  */
 public enum CommandEnum implements CommandExecutor {
@@ -91,7 +91,8 @@ public enum CommandEnum implements CommandExecutor {
 
 		@Override
 		public void run() {
-			List<Job> list = (List<Job>) parameters.get(1);
+			@SuppressWarnings("unchecked")
+			List<Job> list = (List<Job>) parameters.get(0);
 			Job jobToRun = list.get(0);
 			jobToRun.helloWorld();
 		}
@@ -99,8 +100,16 @@ public enum CommandEnum implements CommandExecutor {
 	EXECUTE_ACK("execute_ack"){
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-			
+			ConnectedClient c = (ConnectedClient) parameters.get(0);
+			c.busy = true;
+		}
+		
+	},
+	EXECUTE_COMPLETE("execute_complete"){
+		@Override
+		public void run() {
+			ConnectedClient c = (ConnectedClient) parameters.get(0);
+			c.busy = false;
 		}
 		
 	};
