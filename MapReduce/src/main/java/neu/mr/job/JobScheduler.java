@@ -56,7 +56,7 @@ public class JobScheduler {
 					LOGGER.info("num of clients:" + connectedClients.size());
 					LOGGER.info("num of jobs:" + jobQueue.size());
 					for (ConnectedClient client : connectedClients) {
-						LOGGER.info("client " + client.address.getHostAddress()+" busy?:" + client.busy);
+						LOGGER.info("client " + client.address.getHostAddress() + " busy?:" + client.busy);
 						if (!client.busy && !jobQueue.isEmpty()) {
 							Job job = jobQueue.poll();
 							client.assignedJobs.add(job);
@@ -66,13 +66,7 @@ public class JobScheduler {
 						}
 					}
 				}
-				try {
-					Thread.sleep(1000);
-					removeDeadClients();
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				removeDeadClients();
 			}
 		}
 

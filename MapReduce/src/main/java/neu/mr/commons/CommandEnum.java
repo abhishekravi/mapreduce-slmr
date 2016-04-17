@@ -22,12 +22,12 @@ import neu.mr.server.ConnectedClient;
 public enum CommandEnum implements CommandExecutor {
 
 	/**
-	 * Send back a discovery ack, populate the serverInfo object
-	 * and start a TCP connection with the server
+	 * Send back a discovery ack, populate the serverInfo object and start a TCP
+	 * connection with the server
 	 */
 	DISCOVER("discover") {
 		@Override
-		public synchronized void run() {
+		public void run() {
 			DatagramPacket packet = (DatagramPacket) parameters.get(0);
 			ServerInfo serverInfo = (ServerInfo) parameters.get(1);
 			DatagramSocket socket = (DatagramSocket) parameters.get(2);
@@ -38,12 +38,12 @@ public enum CommandEnum implements CommandExecutor {
 		}
 	},
 	/**
-	 * Create a new connected client, start a TCP connection with it and
-	 * add it to the connected-clients list inside the server
+	 * Create a new connected client, start a TCP connection with it and add it
+	 * to the connected-clients list inside the server
 	 */
 	DISCOVER_ACK("discover_ack") {
 		@Override
-		public synchronized void run() {
+		public void run() {
 			DatagramPacket replyPacket = (DatagramPacket) parameters.get(0);
 			@SuppressWarnings("unchecked")
 			List<ConnectedClient> connectedClients = (List<ConnectedClient>) parameters.get(1);
@@ -54,35 +54,37 @@ public enum CommandEnum implements CommandExecutor {
 			client.portNumber = Integer.parseInt(replyCommand.params.get(0));
 			client.alive = true;
 			client.startTcpConnectionWithClient();
-			synchronized (connectedClients){
-			connectedClients.add(client);
+			synchronized (connectedClients) {
+				connectedClients.add(client);
 			}
-			LOGGER.info("client address:" + replyPacket.getAddress().getHostAddress());
+			LOGGER.info("discovery_ack : client address:" + replyPacket.getAddress().getHostAddress());
 			LOGGER.info("client port:" + replyPacket.getPort());
 		}
 	},
-	
+
 	/**
 	 * Heartbeat command send by server to check status of client.
 	 */
 	HEARTBEAT("status_check") {
 		@Override
-		public synchronized void run() {
+		public void run() {
 			ServerInfo server = (ServerInfo) parameters.get(0);
 			Command c = new Command();
 			c.setName(HEARTBEAT_ACK);
 			server.writeToOutputStream(c);
 		}
 	},
-	
+
 	/**
 	 * Heartbeat acknowledgement command from the client.
 	 */
 	HEARTBEAT_ACK("status_ack") {
 		@Override
-		public synchronized void run() {
+		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			c.setLastCommTime(System.currentTimeMillis());
+			synchronized (c) {
+				c.setLastCommTime(System.currentTimeMillis());
+			}
 			LOGGER.info("client alive");
 		}
 	},
@@ -92,7 +94,7 @@ public enum CommandEnum implements CommandExecutor {
 	EXECUTE("execute_job") {
 
 		@Override
-		public synchronized void run() {
+		public void run() {
 			@SuppressWarnings("unchecked")
 			List<Job> list = (List<Job>) parameters.get(0);
 			ServerInfo server = (ServerInfo) parameters.get(1);
@@ -106,24 +108,27 @@ public enum CommandEnum implements CommandExecutor {
 			server.writeToOutputStream(c);
 		}
 	},
-	EXECUTE_ACK("execute_ack"){
+	EXECUTE_ACK("execute_ack") {
 		@Override
-		public synchronized void run() {
+		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			c.running = true;
+			synchronized (c) {
+				c.running = true;
+			}
 		}
-		
+
 	},
-	EXECUTE_COMPLETE("execute_complete"){
+	EXECUTE_COMPLETE("execute_complete") {
 		@Override
-		public synchronized void run() {
+		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			LOGGER.info("updating client " + c.address.getHostAddress()+" busy:" + c.busy);
-			c.running = false;
-			c.busy = false;
-			LOGGER.info("updating client " + c.address.getHostAddress()+" busy:" + c.busy);
+			synchronized (c) {
+				c.running = false;
+				c.busy = false;
+			}
+			LOGGER.info("updating client " + c.address.getHostAddress() + " busy:" + c.busy);
 		}
-		
+
 	};
 
 	private static Logger LOGGER = LoggerFactory.getLogger(CommandEnum.class);
