@@ -27,7 +27,7 @@ public enum CommandEnum implements CommandExecutor {
 	 */
 	DISCOVER("discover") {
 		@Override
-		public void run() {
+		public synchronized void run() {
 			DatagramPacket packet = (DatagramPacket) parameters.get(0);
 			ServerInfo serverInfo = (ServerInfo) parameters.get(1);
 			DatagramSocket socket = (DatagramSocket) parameters.get(2);
@@ -43,7 +43,7 @@ public enum CommandEnum implements CommandExecutor {
 	 */
 	DISCOVER_ACK("discover_ack") {
 		@Override
-		public void run() {
+		public synchronized void run() {
 			DatagramPacket replyPacket = (DatagramPacket) parameters.get(0);
 			@SuppressWarnings("unchecked")
 			List<ConnectedClient> connectedClients = (List<ConnectedClient>) parameters.get(1);
@@ -67,7 +67,7 @@ public enum CommandEnum implements CommandExecutor {
 	 */
 	HEARTBEAT("status_check") {
 		@Override
-		public void run() {
+		public synchronized void run() {
 			ServerInfo server = (ServerInfo) parameters.get(0);
 			Command c = new Command();
 			c.setName(HEARTBEAT_ACK);
@@ -80,7 +80,7 @@ public enum CommandEnum implements CommandExecutor {
 	 */
 	HEARTBEAT_ACK("status_ack") {
 		@Override
-		public void run() {
+		public synchronized void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
 			c.setLastCommTime(System.currentTimeMillis());
 			LOGGER.info("client alive");
@@ -92,7 +92,7 @@ public enum CommandEnum implements CommandExecutor {
 	EXECUTE("execute_job") {
 
 		@Override
-		public void run() {
+		public synchronized void run() {
 			@SuppressWarnings("unchecked")
 			List<Job> list = (List<Job>) parameters.get(0);
 			ServerInfo server = (ServerInfo) parameters.get(1);
@@ -108,7 +108,7 @@ public enum CommandEnum implements CommandExecutor {
 	},
 	EXECUTE_ACK("execute_ack"){
 		@Override
-		public void run() {
+		public synchronized void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
 			c.running = true;
 		}
@@ -116,10 +116,12 @@ public enum CommandEnum implements CommandExecutor {
 	},
 	EXECUTE_COMPLETE("execute_complete"){
 		@Override
-		public void run() {
+		public synchronized void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
+			LOGGER.info("updating client " + c.address.getHostAddress()+" busy:" + c.busy);
 			c.running = false;
 			c.busy = false;
+			LOGGER.info("updating client " + c.address.getHostAddress()+" busy:" + c.busy);
 		}
 		
 	};

@@ -53,7 +53,10 @@ public class JobScheduler {
 		public void run() {
 			while (true) {
 				synchronized (connectedClients) {
+					LOGGER.info("num of clients:" + connectedClients.size());
+					LOGGER.info("num of jobs:" + jobQueue.size());
 					for (ConnectedClient client : connectedClients) {
+						LOGGER.info("client " + client.address.getHostAddress()+" busy?:" + client.busy);
 						if (!client.busy && !jobQueue.isEmpty()) {
 							Job job = jobQueue.poll();
 							client.assignedJobs.add(job);

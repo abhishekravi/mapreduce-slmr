@@ -87,9 +87,9 @@ public class DiscoverySpeaker {
 			try {
 				// DatagramSocket socket = new DatagramSocket();
 				byte[] buf = new byte[1024];
-				DatagramPacket replypacket = new DatagramPacket(buf, buf.length);
 				Command replyCommand;
 				while(true){
+					DatagramPacket replypacket = new DatagramPacket(buf, buf.length);
 					broadcastSocket.receive(replypacket);
 					replyCommand = (Command) SerializationUtils.deserialize(replypacket.getData());
 					replyCommand.getName().parameters.add(replypacket);

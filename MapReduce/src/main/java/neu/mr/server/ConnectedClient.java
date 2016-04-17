@@ -116,6 +116,7 @@ public class ConnectedClient {
 	public void startTcpConnectionWithClient() {
 		try {
 			socket = new Socket(address, portNumber);
+			LOGGER.info("making tcp socket for: " + address.getHostAddress() + ":" + portNumber);
 			out = new BufferedOutputStream(socket.getOutputStream());
 			oout = new ObjectOutputStream(out);
 			oout.flush();
@@ -146,7 +147,8 @@ public class ConnectedClient {
 				try {
 					command = (Command) oin.readObject();
 					lastCommTime = System.currentTimeMillis();
-					LOGGER.info("Received command from client " + command);
+					LOGGER.info("Received command from client " + address.getHostAddress()
+					+ ":" + command);
 					command.getName().parameters.add(getClient());
 					command.getName().run();
 				} catch (IOException | ClassNotFoundException e) {
