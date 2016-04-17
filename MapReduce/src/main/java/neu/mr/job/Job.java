@@ -64,6 +64,12 @@ public class Job implements Serializable {
 	
 	public void helloWorld(){
 		System.out.println("Hello world!");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public Class<?> getJar() {

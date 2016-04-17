@@ -54,7 +54,9 @@ public enum CommandEnum implements CommandExecutor {
 			client.portNumber = Integer.parseInt(replyCommand.params.get(0));
 			client.alive = true;
 			client.startTcpConnectionWithClient();
+			synchronized (connectedClients){
 			connectedClients.add(client);
+			}
 			LOGGER.info("client address:" + replyPacket.getAddress().getHostAddress());
 			LOGGER.info("client port:" + replyPacket.getPort());
 		}

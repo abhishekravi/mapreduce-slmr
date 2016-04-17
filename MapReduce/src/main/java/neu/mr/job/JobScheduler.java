@@ -53,7 +53,6 @@ public class JobScheduler {
 		public void run() {
 			while (true) {
 				synchronized (connectedClients) {
-					removeDeadClients();
 					for (ConnectedClient client : connectedClients) {
 						if (!client.busy && !jobQueue.isEmpty()) {
 							Job job = jobQueue.poll();
@@ -63,9 +62,10 @@ public class JobScheduler {
 							client.sendExecuteCommand();
 						}
 					}
-					connectedClients.notifyAll();
 				}
 				try {
+					Thread.sleep(1000);
+					removeDeadClients();
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
