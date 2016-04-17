@@ -22,7 +22,7 @@ import neu.mr.server.ConnectedClient;
  *
  */
 public class JobScheduler {
-	
+
 	private static Logger LOGGER = LoggerFactory.getLogger(JobScheduler.class);
 
 	private List<ConnectedClient> connectedClients;
@@ -33,13 +33,13 @@ public class JobScheduler {
 
 	public JobScheduler() {
 		jobQueue = new LinkedList<Job>();
-		jobMap = new HashMap<String,Job>();
+		jobMap = new HashMap<String, Job>();
 	}
 
 	public JobScheduler(List<ConnectedClient> connectedClients) {
 		this.connectedClients = connectedClients;
 		jobQueue = new LinkedList<Job>();
-		jobMap = new HashMap<String,Job>();
+		jobMap = new HashMap<String, Job>();
 	}
 
 	public void startScheduling() {
@@ -52,14 +52,23 @@ public class JobScheduler {
 		@Override
 		public void run() {
 			while (true) {
-				removeDeadClients();
-				for (ConnectedClient client : connectedClients) {
-					if (!client.busy && !jobQueue.isEmpty()) {
-						Job job = jobQueue.poll();
-						client.assignedJobs.add(job);
-						jobMap.put(client.address.getHostAddress(), job);
-						client.sendExecuteCommand();
+				synchronized (connectedClients) {
+					removeDeadClients();
+					for (ConnectedClient client : connectedClients) {
+						if (!client.busy && !jobQueue.isEmpty()) {
+							Job job = jobQueue.poll();
+							client.assignedJobs.add(job);
+							client.busy = true;
+							jobMap.put(client.address.getHostAddress(), job);
+							client.sendExecuteCommand();
+						}
 					}
+					connectedClients.notifyAll();
+				}
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		}
@@ -69,8 +78,10 @@ public class JobScheduler {
 		 */
 		private void removeDeadClients() {
 			Iterator<ConnectedClient> it = connectedClients.iterator();
-			while(it.hasNext()){
-				if(!it.next().alive){
+			while (it.hasNext()) {
+				ConnectedClient client = it.next();
+				if (!client.alive) {
+					jobQueue.add(jobMap.get(client.address.getHostAddress()));
 					LOGGER.info("removing client");
 					it.remove();
 				}

@@ -67,9 +67,9 @@ public class DiscoverySpeaker {
 	 * fixed time intervals
 	 * @param clients 
 	 */
-	public void start(List<ConnectedClient> connecteClients) {
+	public void start(List<ConnectedClient> connectedClients) {
 		ackListener.start();
-		this.connectedClients = connecteClients;
+		this.connectedClients = connectedClients;
 		speaker.schedule(speakerTask, 0, 500);
 	}
 
