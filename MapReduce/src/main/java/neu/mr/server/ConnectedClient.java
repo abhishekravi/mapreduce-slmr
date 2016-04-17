@@ -43,6 +43,7 @@ public class ConnectedClient {
 	private Timer heartBeatTimer;
 	private Command heartBeat;
 	public boolean busy = false;
+	public boolean running = false;
 	public List<Job> assignedJobs;
 
 	public ConnectedClient() {

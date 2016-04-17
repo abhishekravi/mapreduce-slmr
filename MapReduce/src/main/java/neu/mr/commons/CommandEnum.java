@@ -93,15 +93,22 @@ public enum CommandEnum implements CommandExecutor {
 		public void run() {
 			@SuppressWarnings("unchecked")
 			List<Job> list = (List<Job>) parameters.get(0);
+			ServerInfo server = (ServerInfo) parameters.get(1);
 			Job jobToRun = list.get(0);
+			Command c = new Command();
+			c.setName(EXECUTE_ACK);
+			server.writeToOutputStream(c);
 			jobToRun.helloWorld();
+			c = new Command();
+			c.setName(EXECUTE_COMPLETE);
+			server.writeToOutputStream(c);
 		}
 	},
 	EXECUTE_ACK("execute_ack"){
 		@Override
 		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			c.busy = true;
+			c.running = true;
 		}
 		
 	},
@@ -109,6 +116,7 @@ public enum CommandEnum implements CommandExecutor {
 		@Override
 		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
+			c.running = false;
 			c.busy = false;
 		}
 		
