@@ -22,9 +22,9 @@ class MapReduceClient {
 	 *            mode, either start the framework as a server or client.
 	 */
 	public static void main(String[] args) {
-		Client client = new Client();
-		LOGGER.info("Starting the client");
-		client.execute();
+		 Client client = new Client();
+		 LOGGER.info("Starting the client");
+		 client.execute();
 	}
-	
+
 }

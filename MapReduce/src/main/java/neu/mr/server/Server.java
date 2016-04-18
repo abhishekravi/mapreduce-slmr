@@ -34,7 +34,7 @@ public class Server {
 	 */
 	public void execute () {
 		this.discovery.start(connectedClients);
-		while(this.connectedClients.size() != 2)
+		while(this.connectedClients.isEmpty())
 			LOGGER.debug("waiting for clients");
 		
 		System.out.println("got a client");

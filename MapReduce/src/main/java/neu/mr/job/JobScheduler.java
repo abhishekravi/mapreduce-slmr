@@ -1,8 +1,5 @@
 package neu.mr.job;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neu.mr.server.ConnectedClient;
+import neu.mr.utils.AwsUtil;
 
 /**
  * 
@@ -64,12 +62,12 @@ public class JobScheduler {
 							jobMap.put(client.address.getHostAddress(), job);
 							client.sendExecuteCommand();
 						}
-						removeDeadClients();
-						try {
-							Thread.sleep(2000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+					}
+					removeDeadClients();
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
 				}
 			}
@@ -108,24 +106,9 @@ public class JobScheduler {
 	}
 
 	private void populateListOfInputFiles(String inputDirectoryPath) {
-		try {
-			listOfInputFiles = new ArrayList<String>();
-			File inputDirectory = new File(inputDirectoryPath);
-			if (inputDirectory.exists()) {
-				File[] listOfFiles = inputDirectory.listFiles(new FileFilter() {
-
-					@Override
-					public boolean accept(File pathname) {
-						return !pathname.getName().startsWith(".");
-					}
-				});
-				for (File file : listOfFiles) {
-					listOfInputFiles.add(file.getCanonicalPath());
-				}
-			}
-		} catch (IOException e) {
-			// Put logger error message
-		}
+		listOfInputFiles = new ArrayList<String>();
+		AwsUtil awsUtil = new AwsUtil("AKIAJG5UIGP6SQUW7OBA", "+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
+		listOfInputFiles.addAll(awsUtil.getFileList("pdmrbucket", "blah"));
 	}
 
 	public List<ConnectedClient> getConnectedClients() {

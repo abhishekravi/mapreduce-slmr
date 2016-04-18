@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import neu.mr.client.ServerInfo;
 import neu.mr.job.Job;
+import neu.mr.job.JobRunner;
 import neu.mr.server.ConnectedClient;
 
 /**
@@ -100,7 +101,7 @@ public enum CommandEnum implements CommandExecutor {
 			Command c = new Command();
 			c.setName(EXECUTE_ACK);
 			server.writeToOutputStream(c);
-			jobToRun.runMapper();
+			JobRunner.runJob(jobToRun);
 			c = new Command();
 			c.setName(EXECUTE_COMPLETE);
 			server.writeToOutputStream(c);

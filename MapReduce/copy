@@ -1,0 +1,1 @@
+cp target/mapReduce-jar-with-dependencies.jar job.jar
