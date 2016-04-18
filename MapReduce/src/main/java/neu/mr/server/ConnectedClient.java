@@ -139,17 +139,24 @@ public class ConnectedClient {
 	 *
 	 */
 	private class CommandListener implements Runnable {
-		Command command;
 
 		@Override
 		public void run() {
 			while (alive) {
+				Command command = new Command();
 				try {
-					command = (Command) oin.readObject();
+					command = (Command) oin.readUnshared();
 					lastCommTime = System.currentTimeMillis();
 					LOGGER.info("Received command from client " + address.getHostAddress()
 					+ ":" + command);
-					command.getName().parameters.add(getClient());
+					List<Object> params = new ArrayList<Object>();
+					if(null != command.getParams())
+						params.add(command.getParams());
+					params.add(getClient());
+					LOGGER.info("current client " + getClient().address.getHostAddress());
+					LOGGER.info("current parameters: " + command.getName().parameters);
+					command.getName().parameters = params;
+					LOGGER.info("after adding parameters: " + command.getName().parameters);
 					command.getName().run();
 				} catch (IOException | ClassNotFoundException e) {
 					alive = false;
@@ -167,7 +174,7 @@ public class ConnectedClient {
 	public void writeToOutputStream(Command command) {
 		try {
 			if (alive) {
-				oout.writeObject(command);
+				oout.writeUnshared(command);
 				oout.flush();
 			}
 		} catch (IOException e) {

@@ -34,8 +34,9 @@ public class Server {
 	 */
 	public void execute () {
 		this.discovery.start(connectedClients);
-		while(this.connectedClients.isEmpty())
+		while(this.connectedClients.size() != 2)
 			LOGGER.debug("waiting for clients");
+		
 		System.out.println("got a client");
 		jobScheduler.setConnectedClients(connectedClients);
 		jobScheduler.startScheduling();

@@ -13,7 +13,7 @@ public class UserJob {
 		job.setConf(new Configuration());
 		job.setMapperClass(UserMapper.class);
 		job.setReducerClass(UserReducer.class);
-		job.setNumOfMapTasks(10);
+		job.setNumOfMapTasks(4);
 		job.setOutputKeyClass(String.class);
 		job.setOutputValueClass(String.class);
 		job.waitForCompletion();

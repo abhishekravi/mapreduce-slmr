@@ -57,7 +57,7 @@ public enum CommandEnum implements CommandExecutor {
 			synchronized (connectedClients) {
 				connectedClients.add(client);
 			}
-			LOGGER.info("discovery_ack : client address:" + replyPacket.getAddress().getHostAddress());
+			LOGGER.info("discovery client address:" + replyPacket.getAddress().getHostAddress());
 			LOGGER.info("client port:" + replyPacket.getPort());
 		}
 	},
@@ -82,9 +82,7 @@ public enum CommandEnum implements CommandExecutor {
 		@Override
 		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			synchronized (c) {
-				c.setLastCommTime(System.currentTimeMillis());
-			}
+			c.setLastCommTime(System.currentTimeMillis());
 			LOGGER.info("client alive");
 		}
 	},
@@ -112,9 +110,7 @@ public enum CommandEnum implements CommandExecutor {
 		@Override
 		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			synchronized (c) {
-				c.running = true;
-			}
+			c.running = true;
 		}
 
 	},
@@ -122,10 +118,8 @@ public enum CommandEnum implements CommandExecutor {
 		@Override
 		public void run() {
 			ConnectedClient c = (ConnectedClient) parameters.get(0);
-			synchronized (c) {
-				c.running = false;
-				c.busy = false;
-			}
+			c.running = false;
+			c.busy = false;
 			LOGGER.info("updating client " + c.address.getHostAddress() + " busy:" + c.busy);
 		}
 

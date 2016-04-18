@@ -64,9 +64,14 @@ public class JobScheduler {
 							jobMap.put(client.address.getHostAddress(), job);
 							client.sendExecuteCommand();
 						}
+						removeDeadClients();
+						try {
+							Thread.sleep(2000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
-				removeDeadClients();
 			}
 		}
 
