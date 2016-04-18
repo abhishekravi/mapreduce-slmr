@@ -1,12 +1,23 @@
 package neu.mr.job;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import neu.mr.map.Mapper;
 import neu.mr.reduce.Reducer;
 import neu.mr.server.Server;
+import neu.mr.utils.AwsUtil;
+import neu.mr.utils.FileUtil;
 
 /**
  * Main job class in which the user would configure their job, including the
@@ -21,7 +32,7 @@ import neu.mr.server.Server;
 public class Job implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	private Class<?> jar;
 	private Class<? extends Mapper> mapperClass;
 	private Class<? extends Reducer> reducerClass;
@@ -61,7 +72,7 @@ public class Job implements Serializable {
 		server.execute();
 		return 0;
 	}
-	
+
 	public void helloWorld(){
 		System.out.println("Hello world!");
 		try {
@@ -70,6 +81,102 @@ public class Job implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public void runMapper () {
+
+		class Context extends Mapper<Object, String, String, String>.Context {
+
+			Map<String, BufferedWriter> bufwrs = new HashMap<String, BufferedWriter>();
+
+			Context(Mapper<Object, String, String, String> mapper) {
+				mapper.super();
+			}
+
+			public void write(String key, String value) {
+
+				try {
+
+					if (!bufwrs.containsKey(key))
+					{
+						BufferedWriter bw;
+						bw = new BufferedWriter(new FileWriter(new File(key), true));
+						bufwrs.put(key, bw);
+					}
+
+					bufwrs.get(key).write(value);
+					bufwrs.get(key).newLine();
+					bufwrs.get(key).flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+
+			public void close()
+			{
+				for (BufferedWriter bw : bufwrs.values())
+				{
+					try {
+						bw.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+
+		}
+
+		try {
+			@SuppressWarnings("unchecked")
+			Mapper<Object, String, String, String> mapper = getMapperClass().getConstructor().newInstance();
+			Context context = new Context(mapper);
+			AwsUtil awsutil = new AwsUtil("AKIAJG5UIGP6SQUW7OBA","+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
+
+			listOfInputFiles.add("blah/55.csv.gz");
+			for (String file : listOfInputFiles)
+			{
+				/* get file from aws */
+				awsutil.readFromS3("pdmrbucket", file, "blah");
+				FileUtil.gunzip (file, file.replace(".gz", ""));
+				//GZIPInputStream gzistrm = new GZIPInputStream(new FileInputStream(file));
+
+				@SuppressWarnings("resource")
+				BufferedReader bufread = new BufferedReader(new FileReader(file.replace(".gz", "")));
+				String dl;
+
+				while ((dl = bufread.readLine()) != null)
+				{
+					mapper.map ("0", dl, context);
+				}
+
+			}
+			context.close();
+
+		} catch (NoSuchMethodException e1) {
+			e1.printStackTrace();
+		} catch (SecurityException e1) {
+			e1.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		}
+
+
+	}
+
+	public void runReducer ()
+	{
+
 	}
 
 	public Class<?> getJar() {

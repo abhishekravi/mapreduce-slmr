@@ -100,7 +100,7 @@ public enum CommandEnum implements CommandExecutor {
 			Command c = new Command();
 			c.setName(EXECUTE_ACK);
 			server.writeToOutputStream(c);
-			jobToRun.helloWorld();
+			jobToRun.runMapper();
 			c = new Command();
 			c.setName(EXECUTE_COMPLETE);
 			server.writeToOutputStream(c);
