@@ -107,7 +107,8 @@ public class AwsUtil {
 		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().
 			    withBucketName(bucket).withPrefix(folder));
 		for(S3ObjectSummary s : objectListing.getObjectSummaries()){
-			fileList.add(s.getKey());
+			if(!s.getKey().endsWith("/"))
+				fileList.add(s.getKey());
 			LOGGER.info("file:" + s.getKey());
 		}
 		return fileList;
@@ -115,6 +116,6 @@ public class AwsUtil {
 	
 	public static void main(String[] args) {
 		AwsUtil a = new AwsUtil("AKIAJG5UIGP6SQUW7OBA","+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
-		a.getFileList("chintan-test-sackett", "finaloutputA9");
+		a.getFileList("pdmrbucket", "blah");
 	}
 }
