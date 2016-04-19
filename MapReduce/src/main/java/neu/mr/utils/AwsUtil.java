@@ -1,14 +1,17 @@
 package neu.mr.utils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 //package utils.aws.s3;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,28 +97,46 @@ public class AwsUtil {
 		File file = new File(fileToUpload);
 		s3.putObject(new PutObjectRequest(bucket, folder + "/" + fileToUpload, file));
 	}
-	
+
 	/**
 	 * method to get list of files from s3 folder.
+	 * 
 	 * @param bucket
 	 * @param folder
-	 * @return
-	 * file list
+	 * @return file list
 	 */
-	public List<String> getFileList(String bucket, String folder){
+	public List<String> getFileList(String bucket, String folder) {
 		List<String> fileList = new ArrayList<String>();
-		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().
-			    withBucketName(bucket).withPrefix(folder));
-		for(S3ObjectSummary s : objectListing.getObjectSummaries()){
-			if(!s.getKey().endsWith("/"))
+		ObjectListing objectListing = s3
+				.listObjects(new ListObjectsRequest().withBucketName(bucket).withPrefix(folder));
+		for (S3ObjectSummary s : objectListing.getObjectSummaries()) {
+			if (!s.getKey().endsWith("/"))
 				fileList.add(s.getKey());
 			LOGGER.info("file:" + s.getKey());
 		}
 		return fileList;
 	}
-	
+
+	/**
+	 * method to download files and append it to a single file.
+	 * 
+	 * @param bucketname
+	 * @param key
+	 * @param fileName
+	 */
+	public void writeToFile(String bucketname, String key, String fileName) {
+		try {
+			S3Object s3object = s3.getObject(new GetObjectRequest(bucketname, key));
+			InputStream input = s3object.getObjectContent();
+			OutputStream out = new FileOutputStream(fileName, true);
+			IOUtils.copy(input, out);
+		} catch (Exception e) {
+			LOGGER.error("error when merging from s3", e);
+		}
+	}
+
 	public static void main(String[] args) {
-		AwsUtil a = new AwsUtil("AKIAJG5UIGP6SQUW7OBA","+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
+		AwsUtil a = new AwsUtil("AKIAJG5UIGP6SQUW7OBA", "+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
 		a.getFileList("pdmrbucket", "blah");
 	}
 }
