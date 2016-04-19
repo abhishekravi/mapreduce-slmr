@@ -1,5 +1,7 @@
 package neu.mr.reduce;
 
+import java.util.Set;
+
 import neu.mr.job.Job;
 import neu.mr.job.JobRunner;
 import neu.mr.utils.AwsUtil;
@@ -18,8 +20,9 @@ public class ReduceRunner extends JobRunner {
 	}
 	
 	@Override
-	public void run(Job job) {
+	public Set<String> run(Job job) {
 		awsutil.toString();
+		return null;
 	}
 
 }

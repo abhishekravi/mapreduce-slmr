@@ -63,14 +63,14 @@ public class ConnectedClient {
 				long timeSinceComm = (System.currentTimeMillis() - lastCommTime) / 1000;
 				LOGGER.info("time:" + timeSinceComm);
 				if (timeSinceComm >= 35) {
-					alive = false;
-					heartBeatTask.cancel();
+					destroy();
+				} else {
+					writeToOutputStream(heartBeat);
 				}
-				writeToOutputStream(heartBeat);
 				LOGGER.info("heartbeat");
 			}
 		};
-		heartBeatTimer.schedule(heartBeatTask, 5000, 30000);
+		heartBeatTimer.schedule(heartBeatTask, 5000, 30 * 60 * 1000);
 	}
 
 	public ConnectedClient getClient() {
@@ -147,12 +147,11 @@ public class ConnectedClient {
 				try {
 					command = (Command) oin.readUnshared();
 					lastCommTime = System.currentTimeMillis();
-					LOGGER.info("Received command from client " + address.getHostAddress()
-					+ ":" + command);
+					LOGGER.info("Received command from client " + address.getHostAddress() + ":" + command);
 					List<Object> params = new ArrayList<Object>();
-					if(null != command.getParams())
-						params.add(command.getParams());
 					params.add(getClient());
+					if (null != command.getParams())
+						params.addAll(command.getParams());
 					LOGGER.info("current client " + getClient().address.getHostAddress());
 					LOGGER.info("current parameters: " + command.getName().parameters);
 					command.getName().parameters = params;
@@ -194,6 +193,20 @@ public class ConnectedClient {
 		} else {
 			LOGGER.error("Cannot send execute command to client - " + address.getHostAddress()
 					+ " as the assignedJobs list is empty for it");
+		}
+	}
+
+	public void destroy() {
+		try {
+			alive = false;
+			heartBeatTimer.cancel();
+			oin.close();
+			oout.close();
+			out.close();
+			in.close();
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 

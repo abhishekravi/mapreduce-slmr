@@ -2,11 +2,13 @@ package neu.mr.job;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import neu.mr.server.ConnectedClient;
 import neu.mr.utils.AwsUtil;
 
 /**
+ * Job scheduler
  * 
  * @author chintanpathak
  *
@@ -24,20 +27,26 @@ public class JobScheduler {
 	private static Logger LOGGER = LoggerFactory.getLogger(JobScheduler.class);
 
 	private List<ConnectedClient> connectedClients;
-	private Map<String, Job> jobMap;
+	private Map<String, Job> assignedJobMap;
 	public static Queue<Job> jobQueue;
 	private Thread schedulerThread;
 	private List<String> listOfInputFiles;
+	public static Set<String> reduceKeys;
+	public static Set<Long> finishedJobs;
+	private int numOfMapTasks = 1;
+	private int numOfReduceTasks = 1;
+	private Job userJob;
+	private long idCounter = 0;
 
-	public JobScheduler() {
+	public JobScheduler(Job userJob) {
+		this.userJob = userJob;
 		jobQueue = new LinkedList<Job>();
-		jobMap = new HashMap<String, Job>();
-	}
-
-	public JobScheduler(List<ConnectedClient> connectedClients) {
-		this.connectedClients = connectedClients;
-		jobQueue = new LinkedList<Job>();
-		jobMap = new HashMap<String, Job>();
+		assignedJobMap = new HashMap<String, Job>();
+		reduceKeys = new HashSet<String>();
+		finishedJobs = new HashSet<Long>();
+		setNumOfMapTasks(userJob.getNumOfMapTasks());
+		setNumOfReduceTasks(userJob.getNumOfReduceTasks());
+		populateMapJobs();
 	}
 
 	public void startScheduling() {
@@ -50,6 +59,9 @@ public class JobScheduler {
 		@Override
 		public void run() {
 			while (true) {
+				if (jobQueue.isEmpty()) {
+					populateReduceJobs();
+				}
 				synchronized (connectedClients) {
 					LOGGER.info("num of clients:" + connectedClients.size());
 					LOGGER.info("num of jobs:" + jobQueue.size());
@@ -57,15 +69,18 @@ public class JobScheduler {
 						LOGGER.info("client " + client.address.getHostAddress() + " busy?:" + client.busy);
 						if (!client.busy && !jobQueue.isEmpty()) {
 							Job job = jobQueue.poll();
+							client.assignedJobs = new ArrayList<Job>();
 							client.assignedJobs.add(job);
 							client.busy = true;
-							jobMap.put(client.address.getHostAddress(), job);
+							assignedJobMap.put(client.address.getHostAddress(), job);
+							LOGGER.info("Sending client " + client.getAddress().getHostAddress() + " a "
+									+ job.getType().name().toString() + " job");
 							client.sendExecuteCommand();
 						}
 					}
 					removeDeadClients();
 					try {
-						Thread.sleep(2000);
+						Thread.sleep(10000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -81,21 +96,24 @@ public class JobScheduler {
 			while (it.hasNext()) {
 				ConnectedClient client = it.next();
 				if (!client.alive) {
-					jobQueue.add(jobMap.get(client.address.getHostAddress()));
+					jobQueue.add(assignedJobMap.get(client.address.getHostAddress()));
 					LOGGER.info("removing client");
+					client.destroy();
 					it.remove();
 				}
 			}
 		}
 	}
 
-	public void populateJobQueue(Job userJob, int numOfMapTasks) {
-		Job job;
-		job = new Job(userJob);
+	public void populateMapJobs() {
+		Job job = new Job(userJob);
 		List<Job> jobs = new ArrayList<Job>();
 		populateListOfInputFiles(job.getInputDirectoryPath());
 		for (int i = 0; i < numOfMapTasks; i++) {
-			jobs.add(new Job(userJob));
+			job = new Job(userJob);
+			job.setId(idCounter++);
+			job.setType(JobType.MAP);
+			jobs.add(job);
 		}
 		for (int i = 0; i < listOfInputFiles.size(); i++) {
 			jobs.get(i % jobs.size()).getListOfInputFiles().add(listOfInputFiles.get(i));
@@ -111,11 +129,65 @@ public class JobScheduler {
 		listOfInputFiles.addAll(awsUtil.getFileList("pdmrbucket", "blah"));
 	}
 
+	private void populateReduceJobs() {
+		if (finishedJobs.size() == numOfMapTasks) {
+			LOGGER.info("Map jobs finished - Now populating reduce jobs");
+			Job job;
+			List<Job> jobs = new ArrayList<Job>();
+
+			for (int i = 0; i < numOfReduceTasks; i++) {
+				LOGGER.info("Creating reduce job with id : " + idCounter);
+				job = new Job(userJob);
+				job.setListOfInputFiles(new ArrayList<String>());
+				job.setId(idCounter++);
+				job.setType(JobType.REDUCE);
+				jobs.add(job);
+			}
+
+			Iterator<String> reduceKeysIterator = reduceKeys.iterator();
+			String reduceKey;
+
+			LOGGER.info("Reduce keys are: ");
+			for (int i = 0; i < reduceKeys.size(); i++) {
+				reduceKey = reduceKeysIterator.next();
+				LOGGER.info(reduceKey);
+				jobs.get(i % jobs.size()).getListOfInputFiles().add(reduceKey);
+			}
+
+			reduceKeys.clear();
+
+			for (Job splitJob : jobs) {
+				jobQueue.add(splitJob);
+			}
+		}
+	}
+
+	public static void markJobAsComplete(Long jobId) {
+		LOGGER.info("Marking job id " + jobId + " as finished");
+		finishedJobs.add(jobId);
+	}
+
 	public List<ConnectedClient> getConnectedClients() {
 		return connectedClients;
 	}
 
 	public void setConnectedClients(List<ConnectedClient> connectedClients) {
 		this.connectedClients = connectedClients;
+	}
+
+	public int getNumOfMapTasks() {
+		return numOfMapTasks;
+	}
+
+	public void setNumOfMapTasks(int numOfMapTasks) {
+		this.numOfMapTasks = numOfMapTasks;
+	}
+
+	public int getNumOfReduceTasks() {
+		return numOfReduceTasks;
+	}
+
+	public void setNumOfReduceTasks(int numOfReduceTasks) {
+		this.numOfReduceTasks = numOfReduceTasks;
 	}
 }

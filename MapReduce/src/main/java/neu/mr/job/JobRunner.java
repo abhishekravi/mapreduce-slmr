@@ -1,5 +1,7 @@
 package neu.mr.job;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,18 +30,19 @@ public abstract class JobRunner {
 		awsutil = new AwsUtil("AKIAJG5UIGP6SQUW7OBA", "+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
 	}
 
-	@SuppressWarnings("rawtypes")
-	public static void runJob(Job job) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static Set<String> runJob(Job job) {
 		mapRunner = new MapRunner(awsutil);
 		reduceRunner = new ReduceRunner(awsutil);
 		if (job.getType().equals(JobType.MAP)) {
-			mapRunner.run(job);
+			return mapRunner.run(job);
 		} else if (job.getType().equals(JobType.REDUCE)) {
-			reduceRunner.run(job);
+			return reduceRunner.run(job);
 		} else {
 			LOGGER.error("Cannot execute job that is neither of the type map or reduce");
 		}
+		return null;
 	}
 
-	public abstract void run(Job job);
+	public abstract Set<String> run(Job job);
 }

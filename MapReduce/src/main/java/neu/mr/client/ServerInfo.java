@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,9 +100,10 @@ public class ServerInfo {
 				try {
 					command = (Command) oin.readObject();
 					LOGGER.info("Received command from server " + command);
+					command.getName().parameters = new ArrayList<Object>();
+					command.getName().parameters.add(getserver());
 					if(null != command.getJobs())
 						command.getName().parameters.add(command.getJobs());
-					command.getName().parameters.add(getserver());
 					command.getName().run();
 				} catch (IOException | ClassNotFoundException e) {
 					LOGGER.error("IOException while reading from input stream in ServerInfo", e);

@@ -1,6 +1,7 @@
 package neu.mr.commons;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import neu.mr.job.Job;
@@ -30,9 +31,13 @@ public class Command implements Serializable {
 
 	public Command(CommandEnum name) {
 		this.name = name;
+		jobs = new ArrayList<Job>();
+		params = new ArrayList<String>();
 	}
-	
+
 	public Command() {
+		jobs = new ArrayList<Job>();
+		params = new ArrayList<String>();
 	}
 
 	public CommandEnum getName() {

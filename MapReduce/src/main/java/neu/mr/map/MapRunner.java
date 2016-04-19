@@ -11,16 +11,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import neu.mr.job.Job;
 import neu.mr.job.JobRunner;
 import neu.mr.utils.AwsUtil;
+import neu.mr.utils.NetworkUtils;
 
 /**
  * Class to run the map jobs
@@ -31,6 +34,7 @@ import neu.mr.utils.AwsUtil;
 public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 
 	private AwsUtil awsutil;
+	private static Logger LOGGER = LoggerFactory.getLogger(JobRunner.class);
 
 	class Context extends Mapper<Integer, String, K2, V2>.Context {
 
@@ -44,7 +48,7 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 		public void write(K2 key, V2 value) {
 
 			try {
-				String stringKey = key.toString() + ".gz";
+				String stringKey = key.toString() + "~" + NetworkUtils.getIpAddress().getHostAddress() + ".gz";
 				String stringValue = value.toString();
 				if (!bufwrs.containsKey(stringKey)) {
 					GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(stringKey)));
@@ -84,14 +88,16 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 	}
 
 	@Override
-	public void run(Job job) {
+	public Set<String> run(Job job) {
 
 		try {
 			@SuppressWarnings("unchecked")
 			Mapper<Integer, String, K2, V2> mapper = job.getMapperClass().getConstructor().newInstance();
 			Context context = new Context(mapper);
 
+			LOGGER.info("Processing files : " + job.getListOfInputFiles());
 			for (String file : job.getListOfInputFiles()) {
+				LOGGER.info("Downloading file : " + file + " from S3");
 				/* get file from aws */
 				awsutil.readFromS3("pdmrbucket", file, "blah");
 				InputStream fileStream = new FileInputStream(file);
@@ -101,20 +107,23 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 				String dl;
 				Integer i = 0;
 
+				LOGGER.info("Starting mapper on file " + file);
 				while ((dl = bufread.readLine()) != null) {
 					mapper.map(i, dl, context);
 				}
+				LOGGER.info("Finished mapper for the file - " + file);
 
 				bufread.close();
 			}
 
 			Set<String> keyset = context.keySet();
+			context.close();
+
 			for (String key : keyset) {
 				awsutil.writeToS3("pdmrbucket", key, "tmp");
 			}
 
-			context.close();
-
+			return keyset;
 		} catch (NoSuchMethodException e1) {
 			e1.printStackTrace();
 		} catch (SecurityException e1) {
@@ -132,5 +141,6 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 }

@@ -18,17 +18,20 @@ import neu.mr.server.Server;
  * @author Chintan Pathak, Mania Abdi
  *
  */
+@SuppressWarnings("rawtypes")
 public class Job implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	private Class<?> jar;
+	private long Id;
 	private Class<? extends Mapper> mapperClass;
 	private Class<? extends Reducer> reducerClass;
 	private Class<?> outputKeyClass;
 	private Class<?> outputValueClass;
 	private String inputDirectoryPath;
 	private int numOfMapTasks;
+	private int numOfReduceTasks;
 	private List<String> listOfInputFiles;
 	private Configuration conf;
 	private String name;
@@ -36,7 +39,7 @@ public class Job implements Serializable {
 
 	public Job() {
 		listOfInputFiles = new ArrayList<String>();
-		type = JobType.MAP;
+		type = JobType.UNASSIGNED;
 	}
 
 	public Job(Job other) {
@@ -55,8 +58,7 @@ public class Job implements Serializable {
 	}
 
 	public int waitForCompletion() {
-		JobScheduler jobScheduler = new JobScheduler();
-		jobScheduler.populateJobQueue(this, numOfMapTasks);
+		JobScheduler jobScheduler = new JobScheduler(this);
 		Server server = new Server(jobScheduler);
 		server.execute();
 		return 0;
@@ -80,6 +82,7 @@ public class Job implements Serializable {
 		this.jar = jar;
 	}
 
+	
 	public Class<? extends Mapper> getMapperClass() {
 		return mapperClass;
 	}
@@ -158,6 +161,22 @@ public class Job implements Serializable {
 
 	public void setType(JobType type) {
 		this.type = type;
+	}
+
+	public int getNumOfReduceTasks() {
+		return numOfReduceTasks;
+	}
+
+	public void setNumOfReduceTasks(int numOfReduceTasks) {
+		this.numOfReduceTasks = numOfReduceTasks;
+	}
+	
+	public long getId() {
+		return Id;
+	}
+
+	public void setId(long id) {
+		Id = id;
 	}
 
 	@Override

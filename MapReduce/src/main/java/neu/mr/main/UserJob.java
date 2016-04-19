@@ -14,6 +14,7 @@ public class UserJob {
 		job.setMapperClass(UserMapper.class);
 		job.setReducerClass(UserReducer.class);
 		job.setNumOfMapTasks(1);
+		job.setNumOfReduceTasks(8);
 		job.setOutputKeyClass(String.class);
 		job.setOutputValueClass(String.class);
 		job.waitForCompletion();

@@ -107,8 +107,10 @@ public class AwsUtil {
 		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().
 			    withBucketName(bucket).withPrefix(folder));
 		for(S3ObjectSummary s : objectListing.getObjectSummaries()){
-			fileList.add(s.getKey());
-			LOGGER.info("file:" + s.getKey());
+			if(!s.getKey().endsWith("/")){
+				fileList.add(s.getKey());
+				LOGGER.info("file:" + s.getKey());
+			}
 		}
 		return fileList;
 	}
