@@ -108,17 +108,13 @@ public enum CommandEnum implements CommandExecutor {
 			LOGGER.info("Job list size:" + list.size());
 			LOGGER.info("Job type:" + jobToRun.getType().name().toString());
 			LOGGER.info("Executing job with list of files" + jobToRun.getListOfInputFiles());
-			if (jobToRun.getType().equals(JobType.MAP)) {
-				Set<String> returnValues = JobRunner.runJob(jobToRun);
-				c = new Command();
-				c.setName(EXECUTE_COMPLETE);
-				c.getParams().add(String.valueOf(jobToRun.getId()));
-				c.getParams().addAll(returnValues);
-				LOGGER.info("Completed job: sending back keys-" + returnValues);
-				server.writeToOutputStream(c);
-			} else {
-				LOGGER.info("Reduce job so not executing");
-			}
+			Set<String> returnValues = JobRunner.runJob(jobToRun);
+			c = new Command();
+			c.setName(EXECUTE_COMPLETE);
+			c.getParams().add(String.valueOf(jobToRun.getId()));
+			c.getParams().addAll(returnValues);
+			LOGGER.info("Completed job: sending back keys-" + returnValues);
+			server.writeToOutputStream(c);
 		}
 	},
 	EXECUTE_ACK("execute_ack") {

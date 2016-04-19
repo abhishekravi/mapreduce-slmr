@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,7 +57,7 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	 */
 	class Context extends Reducer<String, String, K2, V2>.Context {
 
-		Map<String, BufferedWriter> bufwrs = new HashMap<String, BufferedWriter>();
+		BufferedWriter bw;
 
 		Context(Reducer<String, String, K2, V2> reducer) {
 			reducer.super();
@@ -70,15 +71,11 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 			try {
 				String stringKey = key.toString() + ".gz";
 				String stringValue = value.toString();
-				if (!bufwrs.containsKey(stringKey)) {
-					GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(stringKey)));
-					BufferedWriter bw;
-					bw = new BufferedWriter(new OutputStreamWriter(zip));
-					bufwrs.put(stringKey, bw);
-				}
-				bufwrs.get(stringKey).write(stringValue);
-				bufwrs.get(stringKey).newLine();
-				bufwrs.get(stringKey).flush();
+				GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(stringKey)));
+				bw = new BufferedWriter(new OutputStreamWriter(zip));
+				bw.write(stringValue);
+				bw.newLine();
+				bw.flush();
 			} catch (IOException e) {
 				LOGGER.error("error when writing file", e);
 			}
@@ -86,14 +83,15 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 		}
 
 		/**
-		 * method to get key set.
-		 * 
-		 * @return set of keys
+		 * reducer cleanup method
 		 */
-		public Set<String> getkeySet() {
-			return bufwrs.keySet();
+		public void close() {
+			try {
+				bw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	/**
@@ -103,27 +101,29 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	public Set<String> run(Job job) {
 
 		shuffleTask(job.getListOfInputFiles());
-		//multi threading here???
+		// multi threading here???
+		LOGGER.info("starting reducer");
 		for (Entry<String, List<String>> entry : taskMap.entrySet()) {
-			startReducer(job, entry.getKey() + ".gz");
+			startReducer(job, entry.getKey());
 		}
-		return null;
+		return new HashSet<String>();
 	}
 
 	private void startReducer(Job job, String key) {
 		try {
+			LOGGER.info("in reduce for key:" + key);
 			@SuppressWarnings("unchecked")
 			Reducer<String, String, K2, V2> reducer = job.getReducerClass().getConstructor().newInstance();
 			Context context = new Context(reducer);
 			/* get file from aws */
-			InputStream fileStream = new FileInputStream(key);
+			InputStream fileStream = new FileInputStream(key + ".gz");
 			Reader reader = new InputStreamReader(new GZIPInputStream(fileStream));
 			BufferedReader bufread = new BufferedReader(reader);
 			FileItrable fileItrable = new FileItrable(bufread);
 			reducer.reduce(key, fileItrable, context);
 			bufread.close();
-			awsutil.writeToS3("pdmrbucket", key, "output");
-
+			context.close();
+			awsutil.writeToS3("pdmrbucket", key + ".gz", "output");
 		} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException | InstantiationException
 				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			LOGGER.error("error when reading file", e);
