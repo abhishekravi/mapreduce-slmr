@@ -16,7 +16,7 @@ public class UserJob {
 		job.setJar(UserJob.class);
 		job.setMapperClass(UserMapper.class);
 		job.setReducerClass(UserReducer.class);
-		job.setNumOfMapTasks(2);
+		job.setNumOfMapTasks(10);
 		job.setNumOfReduceTasks(8);
 		job.setOutputKeyClass(String.class);
 		job.setOutputValueClass(String.class);
