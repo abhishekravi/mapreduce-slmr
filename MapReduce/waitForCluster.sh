@@ -9,7 +9,6 @@ do
 		if [[ $returnVal != 0 ]]; then
 			`sh checkSshTo.sh $1`
 			returnVal=$?;
-			echo "Return value: $returnVal"
 			sleep 5s;
 		else 
 			isUp=true;

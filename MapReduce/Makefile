@@ -1,0 +1,17 @@
+BUCKET=pdmrbucket
+CLUSTER_SIZE=5
+USER_PARAMS=''
+
+build:
+	mvn clean package
+	sh copyRunnableJar.sh
+
+setupCloud:
+	sh createInstances.sh $(CLUSTER_SIZE)
+	sh generateCommands.sh
+	sh waitForCluster.sh
+	sh scpToAll.sh
+
+run:
+	sh startServer.sh $USER_PARAMS
+	sh startClients.sh
