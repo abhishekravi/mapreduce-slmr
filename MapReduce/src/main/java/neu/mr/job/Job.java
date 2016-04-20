@@ -1,8 +1,14 @@
 package neu.mr.job;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import neu.mr.map.Mapper;
 import neu.mr.reduce.Reducer;
@@ -21,6 +27,7 @@ import neu.mr.server.Server;
 @SuppressWarnings("rawtypes")
 public class Job implements Serializable {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(Job.class);
 	private static final long serialVersionUID = 1L;
 
 	private Class<?> jar;
@@ -30,6 +37,7 @@ public class Job implements Serializable {
 	private Class<?> outputKeyClass;
 	private Class<?> outputValueClass;
 	private String inputDirectoryPath;
+	private String outputDirectoryPath;
 	private int numOfMapTasks;
 	private int numOfReduceTasks;
 	private List<String> listOfInputFiles;
@@ -40,6 +48,7 @@ public class Job implements Serializable {
 	public Job() {
 		listOfInputFiles = new ArrayList<String>();
 		type = JobType.UNASSIGNED;
+		this.conf = new Configuration();
 	}
 
 	public Job(Job other) {
@@ -58,20 +67,25 @@ public class Job implements Serializable {
 	}
 
 	public int waitForCompletion() {
-		JobScheduler jobScheduler = new JobScheduler(this);
-		Server server = new Server(jobScheduler);
-		server.execute();
-		return 0;
-	}
-
-	public void helloWorld() {
-		System.out.println("Hello world!");
+		String[] s3info = inputDirectoryPath.split("/");
+		this.conf.map.put(Configuration.INPUT_BUCKET, s3info[2]);
+		this.conf.map.put(Configuration.INPUT_FOLDER, s3info[3]);
+		s3info = outputDirectoryPath.split("/");
+		this.conf.map.put(Configuration.OUTPUT_BUCKET, s3info[2]);
+		this.conf.map.put(Configuration.OUTPUT_FOLDER, s3info[3]);
+		Properties prop = new Properties();
+		InputStream input;
+		String filename = "config.properties";
+		input = getClass().getClassLoader().getResourceAsStream(filename);
 		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			prop.load(input);
+			JobScheduler jobScheduler = new JobScheduler(this, prop.getProperty("awsid"), prop.getProperty("awskey"));
+			Server server = new Server(jobScheduler);
+			server.execute();
+		} catch (IOException e){
+			LOGGER.error("error when loading properties file", e);
 		}
+		return 0;
 	}
 
 	public Class<?> getJar() {
@@ -182,5 +196,13 @@ public class Job implements Serializable {
 	@Override
 	public String toString() {
 		return listOfInputFiles.toString();
+	}
+
+	public String getOutputDirectoryPath() {
+		return outputDirectoryPath;
+	}
+
+	public void setOutputDirectoryPath(String outputDirectoryPath) {
+		this.outputDirectoryPath = outputDirectoryPath;
 	}
 }

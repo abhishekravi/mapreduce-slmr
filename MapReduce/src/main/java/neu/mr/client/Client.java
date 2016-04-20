@@ -1,5 +1,7 @@
 package neu.mr.client;
 
+import neu.mr.utils.AwsUtil;
+
 /**
  * Main class for the client
  * @author chintanpathak, Abhishek Ravichandran
@@ -12,10 +14,13 @@ public class Client {
 	
 	/**
 	 * constructor to initialize a client.
+	 * @param address
+	 * @param awskey 
+	 * @param awsid 
 	 */
-	public Client(String address){
+	public Client(String address, String awsid, String awskey){
 		this.discoveryListener = new DiscoveryListener();
-		this.serverInfo = new ServerInfo(address);
+		this.serverInfo = new ServerInfo(address, new AwsUtil(awsid, awskey));
 	}
 	
 	/**

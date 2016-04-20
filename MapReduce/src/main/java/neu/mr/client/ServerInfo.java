@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neu.mr.commons.Command;
+import neu.mr.utils.AwsUtil;
 
 /**
  * Class that holds server information.
@@ -24,7 +25,8 @@ import neu.mr.commons.Command;
  */
 public class ServerInfo {
 
-	public ServerInfo(String serverAddress) {
+	public ServerInfo(String serverAddress, AwsUtil awsUtil) {
+		this.awsUtil = awsUtil;
 		if (!serverAddress.isEmpty())
 			try {
 				this.address = InetAddress.getByName(serverAddress);
@@ -45,6 +47,7 @@ public class ServerInfo {
 	private BufferedOutputStream out;
 	private ObjectOutputStream oout;
 	private Thread commandListener;
+	public AwsUtil awsUtil;
 
 	public ServerInfo getserver() {
 		return this;

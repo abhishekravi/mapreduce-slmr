@@ -20,6 +20,7 @@ import java.util.zip.GZIPOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neu.mr.job.Configuration;
 import neu.mr.job.Job;
 import neu.mr.job.JobRunner;
 import neu.mr.utils.AwsUtil;
@@ -28,7 +29,7 @@ import neu.mr.utils.NetworkUtils;
 /**
  * Class to run the map jobs
  * 
- * @author chintanpathak, Mania Abdi
+ * @author chintanpathak, Mania Abdi, Abhishek Ravichandran
  *
  */
 public class MapRunner<K1, V1, K2, V2> extends JobRunner {
@@ -99,17 +100,21 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 			for (String file : job.getListOfInputFiles()) {
 				LOGGER.info("Downloading file : " + file + " from S3");
 				/* get file from aws */
-				awsutil.readFromS3("pdmrbucket", file, "blah");
-				InputStream fileStream = new FileInputStream(file);
+				File f = new File("tempmap");
+				f.mkdir();
+				awsutil.download(file, 
+						String.valueOf(job.getConf().getValue(Configuration.INPUT_BUCKET)), "tempmap");
+				String key = file.substring(file.lastIndexOf("/") + 1, file.length());
+				InputStream fileStream = new FileInputStream("tempmap/" + key);
 				Reader reader = new InputStreamReader(new GZIPInputStream(fileStream));
 				BufferedReader bufread = new BufferedReader(reader);
 
-				String dl;
+				String line;
 				Integer i = 0;
 
 				LOGGER.info("Starting mapper on file " + file);
-				while ((dl = bufread.readLine()) != null) {
-					mapper.map(i, dl, context);
+				while ((line = bufread.readLine()) != null) {
+					mapper.map(i, line, context);
 				}
 				LOGGER.info("Finished mapper for the file - " + file);
 
@@ -120,7 +125,7 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 			context.close();
 
 			for (String key : keyset) {
-				awsutil.writeToS3("pdmrbucket", key, "tmp");
+				awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)), key, "tmp");
 			}
 
 			return keyset;

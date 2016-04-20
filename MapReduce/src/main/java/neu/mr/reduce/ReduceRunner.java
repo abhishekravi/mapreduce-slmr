@@ -24,6 +24,7 @@ import java.util.zip.GZIPOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neu.mr.job.Configuration;
 import neu.mr.job.Job;
 import neu.mr.job.JobRunner;
 import neu.mr.utils.AwsUtil;
@@ -38,6 +39,7 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ReduceRunner.class);
 	private AwsUtil awsutil;
+	private static String seperator;
 	private Map<String, List<String>> taskMap = new HashMap<String, List<String>>();
 
 	/**
@@ -45,8 +47,9 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	 * 
 	 * @param awsUtil
 	 */
-	public ReduceRunner(AwsUtil awsUtil) {
+	public ReduceRunner(AwsUtil awsUtil, String seperator) {
 		this.awsutil = awsUtil;
+		ReduceRunner.seperator = seperator;
 	}
 
 	/**
@@ -73,7 +76,7 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 				String stringValue = value.toString();
 				GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(stringKey)));
 				bw = new BufferedWriter(new OutputStreamWriter(zip));
-				bw.write(stringValue);
+				bw.write(stringKey + ReduceRunner.seperator + stringValue);
 				bw.newLine();
 				bw.flush();
 			} catch (IOException e) {
@@ -100,7 +103,7 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	@Override
 	public Set<String> run(Job job) {
 
-		shuffleTask(job.getListOfInputFiles());
+		shuffleTask(job.getListOfInputFiles(), job.getConf());
 		// multi threading here???
 		LOGGER.info("starting reducer");
 		for (Entry<String, List<String>> entry : taskMap.entrySet()) {
@@ -123,7 +126,8 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 			reducer.reduce(key, fileItrable, context);
 			bufread.close();
 			context.close();
-			awsutil.writeToS3("pdmrbucket", key + ".gz", "output");
+			awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)), 
+					key + ".gz", String.valueOf(job.getConf().getValue(Configuration.OUTPUT_FOLDER)));
 		} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException | InstantiationException
 				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			LOGGER.error("error when reading file", e);
@@ -133,23 +137,25 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	/**
 	 * method to start the shuffle task. Here we download all files with the
 	 * same key and merge them into a single files.
+	 * @param configuration 
 	 * 
 	 * @param list
 	 *            list of keys
 	 */
-	private void shuffleTask(List<String> keyList) {
-		List<String> files = awsutil.getFileList("pdmrbucket", "tmp");
+	private void shuffleTask(List<String> keyList, Configuration conf) {
+		String bucket = String.valueOf(conf.getValue(Configuration.OUTPUT_BUCKET));
+		List<String> files = awsutil.getFileList(bucket, "tmp");
 		for (String key : keyList) {
 			taskMap.put(key, getFilesForKey(key, files));
 		}
-		startMerge();
+		startMerge(bucket);
 		LOGGER.info("beginning shuffle task");
 	}
 
-	private void startMerge() {
+	private void startMerge(String bucket) {
 		for (Entry<String, List<String>> entry : taskMap.entrySet()) {
 			for (String file : entry.getValue())
-				awsutil.writeToFile("pdmrbucket", file, entry.getKey() + ".gz");
+				awsutil.writeToFile(bucket, file, entry.getKey() + ".gz");
 		}
 	}
 

@@ -49,15 +49,15 @@ public class AwsUtil {
 	}
 
 	/**
-	 * method to download file from s3.
-	 * 
+	 * to download file from s3.
 	 * @param filename
+	 * name of file to download
 	 * @param bucket
+	 * bucket name
 	 * @param output
-	 *            file name to download
-	 * @param fs
+	 * directory to put the file in
 	 */
-	private void download(String filename, String bucket, String output) {
+	public void download(String filename, String bucket, String output) {
 		S3Object s3object = s3.getObject(new GetObjectRequest(bucket, filename));
 		InputStream input = s3object.getObjectContent();
 		try {
@@ -70,17 +70,6 @@ public class AwsUtil {
 		}
 	}
 
-	/**
-	 * read files from s3
-	 * 
-	 * @param bucketname
-	 * @param key
-	 * @param output
-	 * @throws IOException
-	 */
-	public void readFromS3(String bucketname, String key, String output) throws IOException {
-		download(key, bucketname, output);
-	}
 
 	/**
 	 * method to write to s3.

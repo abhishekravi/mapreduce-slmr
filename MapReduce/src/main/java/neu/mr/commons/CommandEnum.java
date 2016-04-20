@@ -107,7 +107,7 @@ public enum CommandEnum implements CommandExecutor {
 			LOGGER.info("Job list size:" + list.size());
 			LOGGER.info("Job type:" + jobToRun.getType().name().toString());
 			LOGGER.info("Executing job with list of files" + jobToRun.getListOfInputFiles());
-			Set<String> returnValues = JobRunner.runJob(jobToRun);
+			Set<String> returnValues = JobRunner.runJob(jobToRun, server.awsUtil);
 			c = new Command();
 			c.setName(EXECUTE_COMPLETE);
 			c.getParams().add(String.valueOf(jobToRun.getId()));

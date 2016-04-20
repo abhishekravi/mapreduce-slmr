@@ -37,13 +37,15 @@ public class JobScheduler {
 	private int numOfReduceTasks = 1;
 	private Job userJob;
 	private long idCounter = 0;
+	private AwsUtil awsUtil;
 
-	public JobScheduler(Job userJob) {
+	public JobScheduler(Job userJob, String awsid, String awskey) {
 		this.userJob = userJob;
 		jobQueue = new LinkedList<Job>();
 		assignedJobMap = new HashMap<String, Job>();
 		reduceKeys = new HashSet<String>();
 		finishedJobs = new HashSet<Long>();
+		this.awsUtil = new AwsUtil(awsid, awskey);
 		setNumOfMapTasks(userJob.getNumOfMapTasks());
 		setNumOfReduceTasks(userJob.getNumOfReduceTasks());
 		populateMapJobs();
@@ -79,11 +81,11 @@ public class JobScheduler {
 						}
 					}
 					removeDeadClients();
-					try {
-						Thread.sleep(10000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+				}
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		}
@@ -108,7 +110,7 @@ public class JobScheduler {
 	public void populateMapJobs() {
 		Job job = new Job(userJob);
 		List<Job> jobs = new ArrayList<Job>();
-		populateListOfInputFiles(job.getInputDirectoryPath());
+		populateListOfInputFiles(job.getConf());
 		for (int i = 0; i < numOfMapTasks; i++) {
 			job = new Job(userJob);
 			job.setId(idCounter++);
@@ -123,10 +125,11 @@ public class JobScheduler {
 		}
 	}
 
-	private void populateListOfInputFiles(String inputDirectoryPath) {
+	private void populateListOfInputFiles(Configuration conf) {
 		listOfInputFiles = new ArrayList<String>();
-		AwsUtil awsUtil = new AwsUtil("AKIAJG5UIGP6SQUW7OBA", "+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
-		listOfInputFiles.addAll(awsUtil.getFileList("pdmrbucket", "blah"));
+		listOfInputFiles.addAll(awsUtil.getFileList(
+				String.valueOf(conf.map.get(Configuration.INPUT_BUCKET))
+				, String.valueOf(conf.map.get(Configuration.INPUT_FOLDER))));
 	}
 
 	private void populateReduceJobs() {

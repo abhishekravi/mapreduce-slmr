@@ -10,10 +10,10 @@ import neu.mr.reduce.ReduceRunner;
 import neu.mr.utils.AwsUtil;
 
 /**
- * Class to run the user job.
- * It delegates map and reduce jobs to MapRunner and ReduceRunner 
- * classes respectively where they are executed using the run()
+ * Class to run the user job. It delegates map and reduce jobs to MapRunner and
+ * ReduceRunner classes respectively where they are executed using the run()
  * method
+ * 
  * @author chintanpathak
  *
  */
@@ -23,17 +23,13 @@ public abstract class JobRunner {
 
 	@SuppressWarnings("rawtypes")
 	private static MapRunner mapRunner;
+	@SuppressWarnings("rawtypes")
 	private static ReduceRunner reduceRunner;
-	private static AwsUtil awsutil;
-
-	static {
-		awsutil = new AwsUtil("AKIAJG5UIGP6SQUW7OBA", "+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
-	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Set<String> runJob(Job job) {
+	public static Set<String> runJob(Job job, AwsUtil awsutil) {
 		mapRunner = new MapRunner(awsutil);
-		reduceRunner = new ReduceRunner(awsutil);
+		reduceRunner = new ReduceRunner(awsutil, String.valueOf(job.getConf().getValue(Configuration.SEPERATOR)));
 		if (job.getType().equals(JobType.MAP)) {
 			return mapRunner.run(job);
 		} else if (job.getType().equals(JobType.REDUCE)) {
