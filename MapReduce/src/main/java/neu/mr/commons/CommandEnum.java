@@ -145,6 +145,15 @@ public enum CommandEnum implements CommandExecutor {
 			LOGGER.info("updating client " + c.address.getHostAddress() + " busy:" + c.busy);
 		}
 
+	},
+	//command to clients to terminate
+	TERMINATE("terminate") {
+		@Override
+		public void run() {
+			ServerInfo si = (ServerInfo) parameters.get(0);
+			si.cleanUp();
+		}
+
 	};
 
 	private static Logger LOGGER = LoggerFactory.getLogger(CommandEnum.class);

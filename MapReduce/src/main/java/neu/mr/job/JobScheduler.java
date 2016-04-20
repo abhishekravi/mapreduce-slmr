@@ -17,9 +17,9 @@ import neu.mr.server.ConnectedClient;
 import neu.mr.utils.AwsUtil;
 
 /**
- * Job scheduler
+ * Job scheduler.
  * 
- * @author chintanpathak
+ * @author chintanpathak, Abhishek Ravichandran
  *
  */
 public class JobScheduler {
@@ -39,6 +39,15 @@ public class JobScheduler {
 	private long idCounter = 0;
 	private AwsUtil awsUtil;
 
+	/**
+	 * initializing job scheduler.
+	 * @param userJob
+	 * user created job
+	 * @param awsid
+	 * awsid
+	 * @param awskey
+	 * awskey
+	 */
 	public JobScheduler(Job userJob, String awsid, String awskey) {
 		this.userJob = userJob;
 		jobQueue = new LinkedList<Job>();
@@ -51,11 +60,19 @@ public class JobScheduler {
 		populateMapJobs();
 	}
 
+	/**
+	 * start distributing the jobs.
+	 */
 	public void startScheduling() {
 		schedulerThread = new Thread(new JobSchedulerRunnable());
 		schedulerThread.start();
 	}
 
+	/**
+	 * The thread that distributes the jobs.
+	 * @author Abhishek Ravichandran
+	 *
+	 */
 	private class JobSchedulerRunnable implements Runnable {
 
 		@Override
@@ -107,6 +124,9 @@ public class JobScheduler {
 		}
 	}
 
+	/**
+	 * create map jobs.
+	 */
 	public void populateMapJobs() {
 		Job job = new Job(userJob);
 		List<Job> jobs = new ArrayList<Job>();
@@ -125,6 +145,10 @@ public class JobScheduler {
 		}
 	}
 
+	/**
+	 * get list of input files to calculate the splits.
+	 * @param conf
+	 */
 	private void populateListOfInputFiles(Configuration conf) {
 		listOfInputFiles = new ArrayList<String>();
 		listOfInputFiles.addAll(awsUtil.getFileList(
@@ -132,6 +156,9 @@ public class JobScheduler {
 				, String.valueOf(conf.map.get(Configuration.INPUT_FOLDER))));
 	}
 
+	/**
+	 * create reduce jobs.
+	 */
 	private void populateReduceJobs() {
 		if (finishedJobs.size() == numOfMapTasks) {
 			LOGGER.info("Map jobs finished - Now populating reduce jobs");
@@ -165,6 +192,11 @@ public class JobScheduler {
 		}
 	}
 
+	/**
+	 * mark job as compelte.
+	 * @param jobId
+	 * jobid
+	 */
 	public static void markJobAsComplete(Long jobId) {
 		LOGGER.info("Marking job id " + jobId + " as finished");
 		finishedJobs.add(jobId);

@@ -72,11 +72,11 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 		@Override
 		public void write(K2 key, V2 value) {
 			try {
-				String stringKey = key.toString() + ".gz";
+				String file = key.toString() + ".gz";
 				String stringValue = value.toString();
-				GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(stringKey)));
+				GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(file)));
 				bw = new BufferedWriter(new OutputStreamWriter(zip));
-				bw.write(stringKey + ReduceRunner.seperator + stringValue);
+				bw.write(key.toString() + ReduceRunner.seperator + stringValue);
 				bw.newLine();
 				bw.flush();
 			} catch (IOException e) {
@@ -152,6 +152,11 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 		LOGGER.info("beginning shuffle task");
 	}
 
+	/**
+	 * merge all files needed for same key.
+	 * @param bucket
+	 * bucket name
+	 */
 	private void startMerge(String bucket) {
 		for (Entry<String, List<String>> entry : taskMap.entrySet()) {
 			for (String file : entry.getValue())

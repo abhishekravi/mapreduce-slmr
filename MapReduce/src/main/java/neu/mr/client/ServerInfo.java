@@ -138,4 +138,19 @@ public class ServerInfo {
 			LOGGER.error("IOException while writing to output stream in ConnectedClient", e);
 		}
 	}
+
+	/**
+	 * cleanup method for termination.
+	 */
+	public void cleanUp() {
+		try {
+			alive = false;
+			oin.close();
+			oout.close();
+			connection.close();
+			serverSocket.close();
+		} catch (IOException e) {
+			LOGGER.error("when terminating client", e);
+		}
+	}
 }
