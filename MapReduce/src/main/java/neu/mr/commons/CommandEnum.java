@@ -14,7 +14,6 @@ import neu.mr.client.ServerInfo;
 import neu.mr.job.Job;
 import neu.mr.job.JobRunner;
 import neu.mr.job.JobScheduler;
-import neu.mr.job.JobType;
 import neu.mr.server.ConnectedClient;
 
 /**

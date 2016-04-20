@@ -108,7 +108,7 @@ public class DiscoverySpeaker {
 	 */
 	private void createDatagramConnection() {
 		try {
-			broadcastSocket = new DatagramSocket();
+			broadcastSocket = new DatagramSocket(9001);
 			broadcastSocket.setBroadcast(true);
 		} catch (Exception e) {
 			LOGGER.error("exception when creating datagram socket", e);

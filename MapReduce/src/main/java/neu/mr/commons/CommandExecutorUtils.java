@@ -56,8 +56,9 @@ public class CommandExecutorUtils {
 	 * @param packet
 	 */
 	public static void initializeServer(ServerInfo serverInfo, DatagramPacket packet) {
-		serverInfo.address = packet.getAddress();
+		if(serverInfo.address == null)
+			serverInfo.address = packet.getAddress();
 		serverInfo.alive = true;
-		serverInfo.portNumber = packet.getPort();
+		serverInfo.portNumber = 9001;
 	}
 }

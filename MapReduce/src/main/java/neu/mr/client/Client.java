@@ -13,9 +13,9 @@ public class Client {
 	/**
 	 * constructor to initialize a client.
 	 */
-	public Client(){
+	public Client(String address){
 		this.discoveryListener = new DiscoveryListener();
-		this.serverInfo = new ServerInfo();
+		this.serverInfo = new ServerInfo(address);
 	}
 	
 	/**

@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import org.slf4j.Logger;
@@ -22,6 +23,15 @@ import neu.mr.commons.Command;
  *
  */
 public class ServerInfo {
+
+	public ServerInfo(String serverAddress) {
+		if (!serverAddress.isEmpty())
+			try {
+				this.address = InetAddress.getByName(serverAddress);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+	}
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ServerInfo.class);
 
@@ -102,12 +112,12 @@ public class ServerInfo {
 					LOGGER.info("Received command from server " + command);
 					command.getName().parameters = new ArrayList<Object>();
 					command.getName().parameters.add(getserver());
-					if(null != command.getJobs())
+					if (null != command.getJobs())
 						command.getName().parameters.add(command.getJobs());
 					command.getName().run();
 				} catch (IOException | ClassNotFoundException e) {
 					LOGGER.error("IOException while reading from input stream in ServerInfo", e);
-				} 
+				}
 			}
 		}
 	}

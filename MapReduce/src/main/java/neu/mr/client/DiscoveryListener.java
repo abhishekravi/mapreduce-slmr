@@ -56,6 +56,14 @@ public class DiscoveryListener {
 			try {
 				this.serverInfo = serverInfo;
 				socket = new DatagramSocket(54321);
+				if(this.serverInfo.address != null){
+					this.discovered = true;
+					Command command = new Command(CommandEnum.DISCOVER);
+					command.getName().parameters.add(receivedPacket);
+					command.getName().parameters.add(serverInfo);
+					command.getName().parameters.add(socket);
+					command.getName().run();
+				}
 			} catch (SocketException e) {
 				LOGGER.error("exception during discovery socket creation:" + e);
 			}
