@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,11 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 	private AwsUtil awsutil;
 	private static Logger LOGGER = LoggerFactory.getLogger(JobRunner.class);
 
+	/**
+	 * context class used to write the records to output files.
+	 * @author chintanpathak, Mania Abdi, Abhishek Ravichandran
+	 *
+	 */
 	class Context extends Mapper<Integer, String, K2, V2>.Context {
 
 		Map<String, BufferedWriter> bufwrs = new HashMap<String, BufferedWriter>();
@@ -52,7 +58,8 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 				String stringKey = key.toString() + "~" + NetworkUtils.getIpAddress().getHostAddress() + ".gz";
 				String stringValue = value.toString();
 				if (!bufwrs.containsKey(stringKey)) {
-					GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(stringKey)));
+					GZIPOutputStream zip = new GZIPOutputStream(
+							new FileOutputStream(new File("mapoutput/"+stringKey)));
 
 					BufferedWriter bw;
 					bw = new BufferedWriter(new OutputStreamWriter(zip));
@@ -68,10 +75,18 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 
 		}
 
+		/**
+		 * method to get the set of keys.
+		 * @return
+		 * set of keys
+		 */
 		public Set<String> keySet() {
 			return bufwrs.keySet();
 		}
 
+		/**
+		 * method to close all the files.
+		 */
 		public void close() {
 			for (BufferedWriter bw : bufwrs.values()) {
 				try {
@@ -84,6 +99,10 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 
 	}
 
+	/**
+	 * initializing map runner.
+	 * @param awsUtil
+	 */
 	public MapRunner(AwsUtil awsUtil) {
 		this.awsutil = awsUtil;
 	}
@@ -99,8 +118,10 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 			LOGGER.info("Processing files : " + job.getListOfInputFiles());
 			for (String file : job.getListOfInputFiles()) {
 				LOGGER.info("Downloading file : " + file + " from S3");
-				/* get file from aws */
+				//create temporary folders
 				File f = new File("tempmap");
+				f.mkdir();
+				f = new File("mapoutput");
 				f.mkdir();
 				awsutil.download(file, 
 						String.valueOf(job.getConf().getValue(Configuration.INPUT_BUCKET)), "tempmap");
@@ -125,26 +146,17 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 			context.close();
 
 			for (String key : keyset) {
-				awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)), key, "tmp");
+				awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)), 
+						"mapoutput/"+key, "tmp");
 			}
-
+			//cleanup of temporary folders
+			FileUtils.deleteDirectory(new File("mapoutput"));
+			FileUtils.deleteDirectory(new File("tempmap"));
 			return keyset;
-		} catch (NoSuchMethodException e1) {
-			e1.printStackTrace();
-		} catch (SecurityException e1) {
-			e1.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
+		} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException
+				| InstantiationException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException e) {
+			LOGGER.error("error when reading file", e);
 		}
 		return null;
 	}

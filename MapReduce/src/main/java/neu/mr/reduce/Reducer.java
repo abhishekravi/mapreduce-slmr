@@ -3,7 +3,7 @@ package neu.mr.reduce;
 import java.io.IOException;
 
 /**
- * Reducer class implementation.
+ * Reducer class to be extended by user to implement reducer.
  * @author Abhishek Ravichandran
  *
  * @param <K1>
@@ -14,10 +14,6 @@ import java.io.IOException;
 public class Reducer<K1, V1, K2, V2> {
 
 	public abstract class Context {
-		/**
-		 * The <code>Context</code> passed on to the {@link Reducer}
-		 * implementations.
-		 */
 		protected Context() {
 
 		}

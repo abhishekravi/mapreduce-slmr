@@ -25,6 +25,7 @@ import neu.mr.utils.NetworkUtils;
 public class DiscoverySpeaker {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(DiscoverySpeaker.class);
+	boolean alive = true;
 	Thread ackListener;
 	TimerTask speakerTask;
 	Timer speaker;
@@ -89,7 +90,7 @@ public class DiscoverySpeaker {
 				byte[] buf = new byte[1024];
 				Command replyCommand;
 				DatagramPacket replypacket = new DatagramPacket(buf, buf.length);
-				while(true){
+				while(alive){
 					broadcastSocket.receive(replypacket);
 					replyCommand = (Command) SerializationUtils.deserialize(replypacket.getData());
 					replyCommand.getName().parameters.add(replypacket);
@@ -113,5 +114,15 @@ public class DiscoverySpeaker {
 		} catch (Exception e) {
 			LOGGER.error("exception when creating datagram socket", e);
 		}
+	}
+	
+	/**
+	 * method to stop the discovery thread.
+	 */
+	public void terminate(){
+		speakerTask.cancel();
+		speaker.cancel();
+		broadcastSocket.close();
+		alive = false;
 	}
 }

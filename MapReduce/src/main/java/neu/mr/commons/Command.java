@@ -8,7 +8,7 @@ import neu.mr.job.Job;
 
 /**
  * Class to hold the command information that a server and client would use for
- * communication
+ * communication.
  * 
  * @author chintanpathak, Abhsihek Ravichandran
  *

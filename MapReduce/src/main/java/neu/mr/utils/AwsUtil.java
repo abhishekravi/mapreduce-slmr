@@ -26,7 +26,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 /**
- * Util class to download files from s3.
+ * Util class for interaction with s3.
  * 
  * @author Abhishek Ravi Chandran
  *
@@ -50,12 +50,13 @@ public class AwsUtil {
 
 	/**
 	 * to download file from s3.
+	 * 
 	 * @param filename
-	 * name of file to download
+	 *            name of file to download
 	 * @param bucket
-	 * bucket name
+	 *            bucket name
 	 * @param output
-	 * directory to put the file in
+	 *            directory to put the file in
 	 */
 	public void download(String filename, String bucket, String output) {
 		S3Object s3object = s3.getObject(new GetObjectRequest(bucket, filename));
@@ -69,7 +70,6 @@ public class AwsUtil {
 			LOGGER.error("error when downloading from s3", e);
 		}
 	}
-
 
 	/**
 	 * method to write to s3.
@@ -97,7 +97,7 @@ public class AwsUtil {
 	public List<String> getFileList(String bucket, String folder) {
 		List<String> fileList = new ArrayList<String>();
 		ObjectListing objectListing = s3
-				.listObjects(new ListObjectsRequest().withBucketName(bucket).withPrefix(folder));
+				.listObjects(new ListObjectsRequest().withBucketName(bucket).withPrefix(folder + "/"));
 		for (S3ObjectSummary s : objectListing.getObjectSummaries()) {
 			if (!s.getKey().endsWith("/"))
 				fileList.add(s.getKey());
@@ -122,10 +122,5 @@ public class AwsUtil {
 		} catch (Exception e) {
 			LOGGER.error("error when merging from s3", e);
 		}
-	}
-
-	public static void main(String[] args) {
-		AwsUtil a = new AwsUtil("AKIAJG5UIGP6SQUW7OBA", "+fIVd3W1Ou5Jsal/8cV9TI+h341FJN2mF3Vr9fpD");
-		a.getFileList("pdmrbucket", "blah");
 	}
 }

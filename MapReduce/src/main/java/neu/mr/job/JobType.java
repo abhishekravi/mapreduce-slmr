@@ -3,7 +3,7 @@ package neu.mr.job;
 import java.io.Serializable;
 
 /**
- * 
+ * Holds the different types of jobs.
  * @author chintanpathak
  *
  */

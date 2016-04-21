@@ -20,10 +20,10 @@ class MapReduceClient {
 	private static Logger LOGGER = LoggerFactory.getLogger(MapReduceClient.class);
 
 	/**
-	 * main method.
+	 * main method to start client.
 	 * 
 	 * @param args
-	 *            mode, either start the framework as a server or client.
+	 *            address of client to run on aws.
 	 */
 	public static void main(String[] args) {
 		String serverAddress = "";

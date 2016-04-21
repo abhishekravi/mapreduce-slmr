@@ -17,7 +17,7 @@ import neu.mr.job.JobScheduler;
 import neu.mr.server.ConnectedClient;
 
 /**
- * Enumeration class for different commands
+ * Enumeration class for different commands.
  * 
  * @author chintanpathak, Abhishek Ravichandran
  *
@@ -56,6 +56,11 @@ public enum CommandEnum implements CommandExecutor {
 			client.address = replyPacket.getAddress();
 			client.portNumber = Integer.parseInt(replyCommand.params.get(0));
 			client.alive = true;
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				LOGGER.error("sleeping during discovery ack", e);
+			}
 			client.startTcpConnectionWithClient();
 			synchronized (connectedClients) {
 				connectedClients.add(client);
@@ -89,6 +94,7 @@ public enum CommandEnum implements CommandExecutor {
 			LOGGER.info("client alive");
 		}
 	},
+	
 	/**
 	 * Command for job execution
 	 */
@@ -116,6 +122,9 @@ public enum CommandEnum implements CommandExecutor {
 			server.writeToOutputStream(c);
 		}
 	},
+	/**
+	 * command to tell server that the client has started job execution.
+	 */
 	EXECUTE_ACK("execute_ack") {
 		@Override
 		public void run() {
@@ -124,6 +133,10 @@ public enum CommandEnum implements CommandExecutor {
 		}
 
 	},
+	
+	/**
+	 * command from client telling server that it has finished the job.
+	 */
 	EXECUTE_COMPLETE("execute_complete") {
 		@Override
 		public void run() {
@@ -146,7 +159,10 @@ public enum CommandEnum implements CommandExecutor {
 		}
 
 	},
-	//command to clients to terminate
+	
+	/**
+	 * termination command for the clients
+	 */
 	TERMINATE("terminate") {
 		@Override
 		public void run() {

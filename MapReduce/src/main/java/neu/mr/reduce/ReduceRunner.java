@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +44,10 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	private Map<String, List<String>> taskMap = new HashMap<String, List<String>>();
 
 	/**
-	 * getting aws object.
-	 * 
+	 * initializing reducer.
 	 * @param awsUtil
+	 * @param seperator
+	 * seperator for output.
 	 */
 	public ReduceRunner(AwsUtil awsUtil, String seperator) {
 		this.awsutil = awsUtil;
@@ -74,7 +76,7 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 			try {
 				String file = key.toString() + ".gz";
 				String stringValue = value.toString();
-				GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File(file)));
+				GZIPOutputStream zip = new GZIPOutputStream(new FileOutputStream(new File("reduceoutput/" + file)));
 				bw = new BufferedWriter(new OutputStreamWriter(zip));
 				bw.write(key.toString() + ReduceRunner.seperator + stringValue);
 				bw.newLine();
@@ -103,41 +105,92 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 	@Override
 	public Set<String> run(Job job) {
 
+		//creating temporary directories
+		File f = new File("reduceoutput");
+		f.mkdir();
+		f = new File("shuffle");
+		f.mkdir();
 		shuffleTask(job.getListOfInputFiles(), job.getConf());
-		// multi threading here???
 		LOGGER.info("starting reducer");
+		//creating threads for each key
+		Thread[] reducerThreads = new Thread[taskMap.size()];
+		int i = 0;
 		for (Entry<String, List<String>> entry : taskMap.entrySet()) {
-			startReducer(job, entry.getKey());
+			reducerThreads[i] = new Thread(new ReducerThread(job, entry.getKey()));
+			reducerThreads[i].start();
+			i++;
+		}
+		for (Thread t : reducerThreads) {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				LOGGER.error("error in reducer multithreading", e);
+			}
+		}
+		try {
+			//cleaning up temporary directories
+			FileUtils.deleteDirectory(new File("reduceoutput"));
+			FileUtils.deleteDirectory(new File("shuffle"));
+		} catch (IOException e) {
+			LOGGER.error("error in reducer cleanup", e);
 		}
 		return new HashSet<String>();
 	}
 
-	private void startReducer(Job job, String key) {
-		try {
-			LOGGER.info("in reduce for key:" + key);
-			@SuppressWarnings("unchecked")
-			Reducer<String, String, K2, V2> reducer = job.getReducerClass().getConstructor().newInstance();
-			Context context = new Context(reducer);
-			/* get file from aws */
-			InputStream fileStream = new FileInputStream(key + ".gz");
-			Reader reader = new InputStreamReader(new GZIPInputStream(fileStream));
-			BufferedReader bufread = new BufferedReader(reader);
-			FileItrable fileItrable = new FileItrable(bufread);
-			reducer.reduce(key, fileItrable, context);
-			bufread.close();
-			context.close();
-			awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)), 
-					key + ".gz", String.valueOf(job.getConf().getValue(Configuration.OUTPUT_FOLDER)));
-		} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException | InstantiationException
-				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			LOGGER.error("error when reading file", e);
+	/**
+	 * reducer task thread, for each key.
+	 * @author Abhishek Ravichandran
+	 *
+	 */
+	class ReducerThread implements Runnable {
+
+		Job job;
+		String key;
+
+		/**
+		 * initializing reducer thread.
+		 * @param job
+		 * @param key
+		 */
+		ReducerThread(Job job, String key) {
+			this.job = job;
+			this.key = key;
+		}
+
+		/**
+		 * run method for the thread.
+		 */
+		public void run() {
+			try {
+				LOGGER.info("in reduce for key:" + key);
+				@SuppressWarnings("unchecked")
+				Reducer<String, String, K2, V2> reducer = job.getReducerClass().getConstructor().newInstance();
+				Context context = new Context(reducer);
+				/* get file from aws */
+				InputStream fileStream = new FileInputStream("shuffle/" + key + ".gz");
+				Reader reader = new InputStreamReader(new GZIPInputStream(fileStream));
+				BufferedReader bufread = new BufferedReader(reader);
+				FileItrable fileItrable = new FileItrable(bufread);
+				reducer.reduce(key, fileItrable, context);
+				bufread.close();
+				context.close();
+				awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)),
+						"reduceoutput/" + key + ".gz",
+						String.valueOf(job.getConf().getValue(Configuration.OUTPUT_FOLDER)));
+			} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException
+					| InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				LOGGER.error("error when reading file", e);
+			}
 		}
 	}
+
 
 	/**
 	 * method to start the shuffle task. Here we download all files with the
 	 * same key and merge them into a single files.
-	 * @param configuration 
+	 * 
+	 * @param configuration
 	 * 
 	 * @param list
 	 *            list of keys
@@ -154,13 +207,14 @@ public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
 
 	/**
 	 * merge all files needed for same key.
+	 * 
 	 * @param bucket
-	 * bucket name
+	 *            bucket name
 	 */
 	private void startMerge(String bucket) {
 		for (Entry<String, List<String>> entry : taskMap.entrySet()) {
 			for (String file : entry.getValue())
-				awsutil.writeToFile(bucket, file, entry.getKey() + ".gz");
+				awsutil.writeToFile(bucket, file, "shuffle/" + entry.getKey() + ".gz");
 		}
 	}
 

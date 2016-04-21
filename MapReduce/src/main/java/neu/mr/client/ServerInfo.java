@@ -25,6 +25,14 @@ import neu.mr.utils.AwsUtil;
  */
 public class ServerInfo {
 
+	/**
+	 * initializing server info.
+	 * 
+	 * @param serverAddress
+	 *            address if available
+	 * @param awsUtil
+	 *            aws util class
+	 */
 	public ServerInfo(String serverAddress, AwsUtil awsUtil) {
 		this.awsUtil = awsUtil;
 		if (!serverAddress.isEmpty())
@@ -99,7 +107,7 @@ public class ServerInfo {
 
 	/**
 	 * Runnable class that hears to the commands that the server would send on
-	 * the tcp connection
+	 * the tcp connection.
 	 * 
 	 * @author chintanpathak
 	 *

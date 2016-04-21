@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 
- * @author Mania Abdi
+ * Configuration parameters for job.
+ * @author Mania Abdi, Abhishek Ravichandran
  *
  */
 public class Configuration implements Serializable {

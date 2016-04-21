@@ -74,7 +74,6 @@ public class ConnectedClient {
 	}
 
 	public ConnectedClient getClient() {
-		// TODO Auto-generated method stub
 		return this;
 	}
 
@@ -196,6 +195,9 @@ public class ConnectedClient {
 		}
 	}
 
+	/**
+	 * method to close all connections before server termination.
+	 */
 	public void destroy() {
 		try {
 			alive = false;
@@ -206,7 +208,7 @@ public class ConnectedClient {
 			in.close();
 			socket.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.error("exception when destroying client", e);
 		}
 	}
 

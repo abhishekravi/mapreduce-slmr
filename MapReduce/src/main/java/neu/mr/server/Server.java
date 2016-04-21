@@ -36,10 +36,9 @@ public class Server {
 		this.discovery.start(connectedClients);
 		while(this.connectedClients.isEmpty())
 			LOGGER.debug("waiting for clients");
-		
-		System.out.println("got a client");
+		LOGGER.info("got a client");
 		jobScheduler.setConnectedClients(connectedClients);
-		jobScheduler.startScheduling();
+		jobScheduler.startScheduling(discovery);
 	}
 
 }

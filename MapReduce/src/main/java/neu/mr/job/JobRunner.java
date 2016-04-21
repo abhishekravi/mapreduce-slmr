@@ -14,7 +14,7 @@ import neu.mr.utils.AwsUtil;
  * ReduceRunner classes respectively where they are executed using the run()
  * method
  * 
- * @author chintanpathak
+ * @author chintanpathak, Abhishek Ravichandran
  *
  */
 public abstract class JobRunner {

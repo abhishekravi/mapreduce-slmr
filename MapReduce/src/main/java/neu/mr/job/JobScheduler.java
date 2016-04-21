@@ -13,11 +13,16 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neu.mr.commons.Command;
+import neu.mr.commons.CommandEnum;
 import neu.mr.server.ConnectedClient;
+import neu.mr.server.DiscoverySpeaker;
 import neu.mr.utils.AwsUtil;
 
 /**
- * Job scheduler.
+ * Job scheduler class that takes care of assigning clients jobs
+ * and fault tolerance by making sure all jobs are run. If a client fails
+ * the job is reassigned to the next free client.
  * 
  * @author chintanpathak, Abhishek Ravichandran
  *
@@ -28,11 +33,14 @@ public class JobScheduler {
 
 	private List<ConnectedClient> connectedClients;
 	private Map<String, Job> assignedJobMap;
+	public static List<Job> pipeLine;
 	public static Queue<Job> jobQueue;
 	private Thread schedulerThread;
 	private List<String> listOfInputFiles;
 	public static Set<String> reduceKeys;
 	public static Set<Long> finishedJobs;
+	private boolean jobComplete = false;
+	private boolean reducerStarted = false;
 	private int numOfMapTasks = 1;
 	private int numOfReduceTasks = 1;
 	private Job userJob;
@@ -62,9 +70,10 @@ public class JobScheduler {
 
 	/**
 	 * start distributing the jobs.
+	 * @param discovery 
 	 */
-	public void startScheduling() {
-		schedulerThread = new Thread(new JobSchedulerRunnable());
+	public void startScheduling(DiscoverySpeaker discovery) {
+		schedulerThread = new Thread(new JobSchedulerRunnable(discovery));
 		schedulerThread.start();
 	}
 
@@ -75,11 +84,19 @@ public class JobScheduler {
 	 */
 	private class JobSchedulerRunnable implements Runnable {
 
+		DiscoverySpeaker discovery;
+		public JobSchedulerRunnable(DiscoverySpeaker discovery) {
+			this.discovery = discovery;
+		}
+
 		@Override
 		public void run() {
-			while (true) {
+			while (!jobComplete) {
 				if (jobQueue.isEmpty()) {
 					populateReduceJobs();
+				}
+				if (jobQueue.isEmpty() && reducerStarted) {
+					jobComplete = true;
 				}
 				synchronized (connectedClients) {
 					LOGGER.info("num of clients:" + connectedClients.size());
@@ -105,8 +122,36 @@ public class JobScheduler {
 					e.printStackTrace();
 				}
 			}
+			LOGGER.info("job completed");
+			if(userJob.getNextJob() != null){
+				startNextPipelineJob();
+			}
+			for(ConnectedClient c : connectedClients){
+				Command com = new Command(CommandEnum.TERMINATE); 
+				c.writeToOutputStream(com);
+				c.destroy();
+			}
+			this.discovery.terminate();
 		}
-
+		
+		/**
+		 * method to start the next job in pipeline.
+		 */
+		private void startNextPipelineJob(){
+			LOGGER.info("stating next job in pipeline");
+			userJob = userJob.getNextJob();
+			jobQueue.clear();
+			assignedJobMap.clear();
+			reduceKeys.clear();
+			finishedJobs.clear();
+			setNumOfMapTasks(userJob.getNumOfMapTasks());
+			setNumOfReduceTasks(userJob.getNumOfReduceTasks());
+			populateMapJobs();
+			jobComplete = false;
+			reducerStarted = false;
+			run();
+		}
+		
 		/**
 		 * method to remove dead clients.
 		 */
@@ -148,6 +193,7 @@ public class JobScheduler {
 	/**
 	 * get list of input files to calculate the splits.
 	 * @param conf
+	 * job configuration
 	 */
 	private void populateListOfInputFiles(Configuration conf) {
 		listOfInputFiles = new ArrayList<String>();
@@ -189,11 +235,13 @@ public class JobScheduler {
 			for (Job splitJob : jobs) {
 				jobQueue.add(splitJob);
 			}
+			if(!jobQueue.isEmpty())
+				reducerStarted = true;
 		}
 	}
 
 	/**
-	 * mark job as compelte.
+	 * mark job as complete.
 	 * @param jobId
 	 * jobid
 	 */

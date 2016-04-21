@@ -21,7 +21,7 @@ import neu.mr.server.Server;
  * It'll also have an object of JobConfiguration that holds a map of properties
  * that every client would get along with the job itself
  * 
- * @author Chintan Pathak, Mania Abdi
+ * @author Chintan Pathak, Mania Abdi, Abhishek Ravichandran
  *
  */
 @SuppressWarnings("rawtypes")
@@ -44,13 +44,23 @@ public class Job implements Serializable {
 	private Configuration conf;
 	private String name;
 	private JobType type;
+	private Job nextJob;
 
+	/**
+	 * initializing a job.
+	 */
 	public Job() {
 		listOfInputFiles = new ArrayList<String>();
 		type = JobType.UNASSIGNED;
 		this.conf = new Configuration();
 	}
 
+	/**
+	 * to clone a job.
+	 * 
+	 * @param other
+	 *            job to clone
+	 */
 	public Job(Job other) {
 		jar = other.getJar();
 		mapperClass = other.getMapperClass();
@@ -66,13 +76,13 @@ public class Job implements Serializable {
 		type = other.getType();
 	}
 
+	/**
+	 * main execution point of server.
+	 * 
+	 * @return
+	 */
 	public int waitForCompletion() {
-		String[] s3info = inputDirectoryPath.split("/");
-		this.conf.map.put(Configuration.INPUT_BUCKET, s3info[2]);
-		this.conf.map.put(Configuration.INPUT_FOLDER, s3info[3]);
-		s3info = outputDirectoryPath.split("/");
-		this.conf.map.put(Configuration.OUTPUT_BUCKET, s3info[2]);
-		this.conf.map.put(Configuration.OUTPUT_FOLDER, s3info[3]);
+		setPaths();
 		Properties prop = new Properties();
 		InputStream input;
 		String filename = "config.properties";
@@ -82,10 +92,24 @@ public class Job implements Serializable {
 			JobScheduler jobScheduler = new JobScheduler(this, prop.getProperty("awsid"), prop.getProperty("awskey"));
 			Server server = new Server(jobScheduler);
 			server.execute();
-		} catch (IOException e){
+		} catch (IOException e) {
 			LOGGER.error("error when loading properties file", e);
 		}
 		return 0;
+	}
+
+	/**
+	 * to get s3 bucket and folder names.
+	 */
+	private void setPaths() {
+		String[] s3info = inputDirectoryPath.split("/");
+		this.conf.map.put(Configuration.INPUT_BUCKET, s3info[2]);
+		this.conf.map.put(Configuration.INPUT_FOLDER, s3info[3]);
+		s3info = outputDirectoryPath.split("/");
+		this.conf.map.put(Configuration.OUTPUT_BUCKET, s3info[2]);
+		this.conf.map.put(Configuration.OUTPUT_FOLDER, s3info[3]);
+		if (this.getNextJob() != null)
+			this.getNextJob().setPaths();
 	}
 
 	public Class<?> getJar() {
@@ -96,7 +120,6 @@ public class Job implements Serializable {
 		this.jar = jar;
 	}
 
-	
 	public Class<? extends Mapper> getMapperClass() {
 		return mapperClass;
 	}
@@ -184,7 +207,7 @@ public class Job implements Serializable {
 	public void setNumOfReduceTasks(int numOfReduceTasks) {
 		this.numOfReduceTasks = numOfReduceTasks;
 	}
-	
+
 	public long getId() {
 		return Id;
 	}
@@ -204,5 +227,13 @@ public class Job implements Serializable {
 
 	public void setOutputDirectoryPath(String outputDirectoryPath) {
 		this.outputDirectoryPath = outputDirectoryPath;
+	}
+
+	public Job getNextJob() {
+		return nextJob;
+	}
+
+	public void setNextJob(Job nextJob) {
+		this.nextJob = nextJob;
 	}
 }

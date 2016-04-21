@@ -14,7 +14,7 @@ import neu.mr.commons.CommandEnum;
 
 /**
  * The ackListener class for our client that listens to the discovery packet that
- * the server sends
+ * the server sends.
  * 
  * @author chintanpathak, Abhishek Ravichandran
  *
