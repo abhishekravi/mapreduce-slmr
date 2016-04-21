@@ -1,6 +1,6 @@
 BUCKET=pdmrbucket
 CLUSTER_SIZE=5
-USER_PARAMS=''
+USER_JOB_PARAMS='parameters here, 1, 2, 3'
 
 build:
 	mvn clean package
@@ -13,5 +13,13 @@ setupCloud:
 	sh scpToAll.sh
 
 run:
-	sh startServer.sh $USER_PARAMS
+	sh startServer.sh $(USER_JOB_PARAMS)
+	sleep 5s;
 	sh startClients.sh
+
+terminate:
+	sh terminateAll.sh
+	rm -fr *.txt
+	rm -fr nohup.out
+	rm -fr job.jar
+	rm -fr target
