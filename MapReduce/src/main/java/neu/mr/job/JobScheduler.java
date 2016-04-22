@@ -1,5 +1,7 @@
 package neu.mr.job;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -123,6 +125,7 @@ public class JobScheduler {
 				}
 			}
 			LOGGER.info("job completed");
+			writeSuccessFile();
 			if(userJob.getNextJob() != null){
 				startNextPipelineJob();
 			}
@@ -132,8 +135,24 @@ public class JobScheduler {
 				c.destroy();
 			}
 			this.discovery.terminate();
+			
 		}
 		
+		/**
+		 * method to write the success file when a job finishes.
+		 */
+		private void writeSuccessFile() {
+			String bucket = String.valueOf(userJob.getConf().getValue(Configuration.OUTPUT_BUCKET));
+			String folder = String.valueOf(userJob.getConf().getValue(Configuration.OUTPUT_FOLDER));
+			File f = new File("success");
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			awsUtil.writeToS3(bucket, "success", folder);
+		}
+
 		/**
 		 * method to start the next job in pipeline.
 		 */
