@@ -1,4 +1,4 @@
-package neu.mr.main;
+package neu.mr.a2;
 
 import java.io.IOException;
 import java.text.ParseException;

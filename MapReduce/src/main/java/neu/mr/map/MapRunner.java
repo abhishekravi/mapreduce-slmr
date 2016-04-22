@@ -40,6 +40,7 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 
 	/**
 	 * context class used to write the records to output files.
+	 * 
 	 * @author chintanpathak, Mania Abdi, Abhishek Ravichandran
 	 *
 	 */
@@ -59,7 +60,7 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 				String stringValue = value.toString();
 				if (!bufwrs.containsKey(stringKey)) {
 					GZIPOutputStream zip = new GZIPOutputStream(
-							new FileOutputStream(new File("mapoutput/"+stringKey)));
+							new FileOutputStream(new File("mapoutput/" + stringKey)));
 
 					BufferedWriter bw;
 					bw = new BufferedWriter(new OutputStreamWriter(zip));
@@ -77,8 +78,8 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 
 		/**
 		 * method to get the set of keys.
-		 * @return
-		 * set of keys
+		 * 
+		 * @return set of keys
 		 */
 		public Set<String> keySet() {
 			return bufwrs.keySet();
@@ -101,6 +102,7 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 
 	/**
 	 * initializing map runner.
+	 * 
 	 * @param awsUtil
 	 */
 	public MapRunner(AwsUtil awsUtil) {
@@ -118,13 +120,12 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 			LOGGER.info("Processing files : " + job.getListOfInputFiles());
 			for (String file : job.getListOfInputFiles()) {
 				LOGGER.info("Downloading file : " + file + " from S3");
-				//create temporary folders
+				// create temporary folders
 				File f = new File("tempmap");
 				f.mkdir();
 				f = new File("mapoutput");
 				f.mkdir();
-				awsutil.download(file, 
-						String.valueOf(job.getConf().getValue(Configuration.INPUT_BUCKET)), "tempmap");
+				awsutil.download(file, String.valueOf(job.getConf().getValue(Configuration.INPUT_BUCKET)), "tempmap");
 				String key = file.substring(file.lastIndexOf("/") + 1, file.length());
 				InputStream fileStream = new FileInputStream("tempmap/" + key);
 				Reader reader = new InputStreamReader(new GZIPInputStream(fileStream));
@@ -146,16 +147,15 @@ public class MapRunner<K1, V1, K2, V2> extends JobRunner {
 			context.close();
 
 			for (String key : keyset) {
-				awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)), 
-						"mapoutput/"+key, "tmp");
+				awsutil.writeToS3(String.valueOf(job.getConf().getValue(Configuration.OUTPUT_BUCKET)),
+						"mapoutput/" + key, "tmp");
 			}
-			//cleanup of temporary folders
+			// cleanup of temporary folders
 			FileUtils.deleteDirectory(new File("mapoutput"));
 			FileUtils.deleteDirectory(new File("tempmap"));
 			return keyset;
-		} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException
-				| InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException e) {
+		} catch (NoSuchMethodException | SecurityException | IOException | InterruptedException | InstantiationException
+				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			LOGGER.error("error when reading file", e);
 		}
 		return null;

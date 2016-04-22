@@ -1,5 +1,5 @@
 BUCKET=pdmrbucket
-CLUSTER_SIZE=5
+CLUSTER_SIZE=4
 USER_JOB_PARAMS='parameters here, 1, 2, 3'
 
 build:
@@ -14,7 +14,7 @@ setupCloud:
 
 run:
 	sh startServer.sh $(USER_JOB_PARAMS)
-	sleep 5s;
+	sleep 5;
 	sh startClients.sh
 
 terminate:
@@ -23,3 +23,4 @@ terminate:
 	rm -fr nohup.out
 	rm -fr job.jar
 	rm -fr target
+

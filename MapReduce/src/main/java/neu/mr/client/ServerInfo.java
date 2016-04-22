@@ -35,12 +35,13 @@ public class ServerInfo {
 	 */
 	public ServerInfo(String serverAddress, AwsUtil awsUtil) {
 		this.awsUtil = awsUtil;
-		if (!serverAddress.isEmpty())
+		if (!serverAddress.isEmpty() && serverAddress != null) {
 			try {
 				this.address = InetAddress.getByName(serverAddress);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
+		}
 	}
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ServerInfo.class);
