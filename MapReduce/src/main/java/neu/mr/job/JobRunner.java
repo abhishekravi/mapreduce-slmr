@@ -26,6 +26,14 @@ public abstract class JobRunner {
 	@SuppressWarnings("rawtypes")
 	private static ReduceRunner reduceRunner;
 
+	/**
+	 * Run the job encapsulated within the "Job" object.
+	 * This method detects the type of job and sends it
+	 * to the respective Map/Reduce runner classes
+	 * @param job
+	 * @param awsutil
+	 * @return
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static Set<String> runJob(Job job, AwsUtil awsutil) {
 		mapRunner = new MapRunner(awsutil);

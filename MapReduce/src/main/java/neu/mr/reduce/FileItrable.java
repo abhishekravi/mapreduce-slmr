@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.util.Iterator;
 
 /**
- * custom Itrable class for File.
+ * custom Iterable class for File.
  * @author Abhishek Ravichandran
  *
  */
