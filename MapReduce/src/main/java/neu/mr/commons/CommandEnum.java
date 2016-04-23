@@ -19,7 +19,7 @@ import neu.mr.server.ConnectedClient;
 /**
  * Enumeration class for different commands.
  * 
- * @author chintanpathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran
  *
  */
 public enum CommandEnum implements CommandExecutor {

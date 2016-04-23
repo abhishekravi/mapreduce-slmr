@@ -20,7 +20,7 @@ import neu.mr.utils.AwsUtil;
 /**
  * Class that holds server information.
  * 
- * @author Abhishek Ravichandran
+ * @author Abhishek Ravichandran, Chintan Pathak
  *
  */
 public class ServerInfo {

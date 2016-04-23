@@ -5,7 +5,7 @@ import neu.mr.utils.AwsUtil;
 /**
  * Main class for the client.
  * 
- * @author chintanpathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran
  *
  */
 public class Client {

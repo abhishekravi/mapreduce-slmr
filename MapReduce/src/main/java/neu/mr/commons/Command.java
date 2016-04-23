@@ -10,7 +10,7 @@ import neu.mr.job.Job;
  * Class to hold the command information that a server and client would use for
  * communication.
  * 
- * @author chintanpathak, Abhsihek Ravichandran
+ * @author Chintan Pathak, Abhsihek Ravichandran
  *
  */
 public class Command implements Serializable {

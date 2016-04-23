@@ -15,7 +15,7 @@ import neu.mr.client.ServerInfo;
 /**
  * Helper methods for command execution
  * 
- * @author chintanpathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran
  *
  */
 public class CommandExecutorUtils {

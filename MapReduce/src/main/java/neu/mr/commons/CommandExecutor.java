@@ -3,7 +3,7 @@ package neu.mr.commons;
 /**
  * Interface that every executable command should implement
  * 
- * @author chintanpathak
+ * @author Chintan Pathak
  *
  */
 public interface CommandExecutor {
