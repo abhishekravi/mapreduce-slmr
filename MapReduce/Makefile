@@ -1,16 +1,19 @@
 BUCKET=pdmrbucket
-CLUSTER_SIZE=11
+CLUSTER_SIZE=2
 USER_MAIN_CLASS=neu.mr.a3.A3
 USER_JOB_PARAMS=''
 INSTANCE_TYPE=t2.micro
+EC2_KEY_NAME=testingec2
+EC2_KEY_FILE=testingec2.pem
+EC2_SECURITY_GROUP_NAME=launch-wizard-1
 
 build:
 	mvn clean package
 	sh copyRunnableJar.sh
 
 setupCloud:
-	sh createInstances.sh $(CLUSTER_SIZE) $(INSTANCE_TYPE)
-	sh generateCommands.sh
+	sh createInstances.sh $(CLUSTER_SIZE) $(INSTANCE_TYPE) $(EC2_KEY_NAME) $(EC2_SECURITY_GROUP_NAME)
+	sh generateCommands.sh $(EC2_KEY_FILE)
 	sh waitForCluster.sh
 	sh scpToAll.sh
 
