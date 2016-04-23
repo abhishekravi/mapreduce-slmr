@@ -120,9 +120,9 @@ public class DiscoverySpeaker {
 	 * method to stop the discovery thread.
 	 */
 	public void terminate(){
+		alive = false;
 		speakerTask.cancel();
 		speaker.cancel();
 		broadcastSocket.close();
-		alive = false;
 	}
 }

@@ -24,16 +24,16 @@ public class A3 {
 	public static void main(String[] args) throws Exception {
 		Job job = new Job();
 		job.setName("Job");
-		job.setInputDirectoryPath("s3://pdmrbucket/performance");
-		job.setOutputDirectoryPath("s3://pdmrbucket/a3out");
+		job.setInputDirectoryPath("s3://pdmrbucket/performance3");
+		job.setOutputDirectoryPath("s3://pdmrbucket/10_a3out3");
 		Configuration conf = new Configuration();
 		conf.set(Configuration.SEPERATOR, ",");
 		job.setConf(conf);
 		job.setJar(A3.class);
 		job.setMapperClass(FlightDataMapper.class);
 		job.setReducerClass(FlightDataReducer.class);
-		job.setNumOfMapTasks(2);
-		job.setNumOfReduceTasks(8);
+		job.setNumOfMapTasks(10);
+		job.setNumOfReduceTasks(10);
 		job.setOutputKeyClass(String.class);
 		job.setOutputValueClass(String.class);
 		job.waitForCompletion();

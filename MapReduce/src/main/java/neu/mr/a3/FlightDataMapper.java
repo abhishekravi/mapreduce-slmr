@@ -25,7 +25,7 @@ public class FlightDataMapper extends Mapper<Integer, String, String, String> {
 		if (DataValidator.isGoodRecord(recordData)) {
 			// have key as carrier,month
 			// passing along values average ticket price
-			context.write(String.valueOf(recordData.getMonth() + recordData.getCarrier()),
+			context.write(String.valueOf(recordData.getCarrier() + "," + recordData.getMonth()),
 					String.valueOf(recordData.getAvgTicketPrice()));
 		}
 	}

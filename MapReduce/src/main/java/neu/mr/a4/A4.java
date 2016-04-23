@@ -26,7 +26,7 @@ public class A4 {
 		 */
 		Job job1 = new Job();
 		job1.setName("Job 1");
-		job1.setInputDirectoryPath("s3://pdmrbucket/performance");
+		job1.setInputDirectoryPath("s3://pdmrbucket/performance3/");
 		job1.setOutputDirectoryPath("s3://pdmrbucket/a4out");
 		Configuration conf = new Configuration();
 		conf.set(Configuration.SEPERATOR, ",");
@@ -41,7 +41,7 @@ public class A4 {
 
 		Job job2 = new Job();
 		job2.setName("Job 2");
-		job2.setInputDirectoryPath("s3://pdmrbucket/performance/");
+		job2.setInputDirectoryPath("s3://pdmrbucket/performance3/");
 		job2.setOutputDirectoryPath("s3://pdmrbucket/a4out" + "_final/");
 		conf = new Configuration();
 		conf.set(Configuration.SEPERATOR, ",");

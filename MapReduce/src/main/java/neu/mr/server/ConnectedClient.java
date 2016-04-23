@@ -158,7 +158,7 @@ public class ConnectedClient {
 					command.getName().run();
 				} catch (IOException | ClassNotFoundException e) {
 					alive = false;
-					LOGGER.error("IOException while reading from input stream in ConnectedClient", e);
+					LOGGER.info("Client going down - " + address.getHostAddress());
 				}
 			}
 		}

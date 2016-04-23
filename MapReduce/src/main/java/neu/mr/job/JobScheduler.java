@@ -144,13 +144,13 @@ public class JobScheduler {
 		private void writeSuccessFile() {
 			String bucket = String.valueOf(userJob.getConf().getValue(Configuration.OUTPUT_BUCKET));
 			String folder = String.valueOf(userJob.getConf().getValue(Configuration.OUTPUT_FOLDER));
-			File f = new File("success");
+			File f = new File("_SUCCESS");
 			try {
 				f.createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			awsUtil.writeToS3(bucket, "success", folder);
+			awsUtil.writeToS3(bucket, "_SUCCESS", folder);
 		}
 
 		/**
