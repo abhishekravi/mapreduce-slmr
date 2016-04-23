@@ -26,7 +26,7 @@ import neu.mr.utils.AwsUtil;
  * and fault tolerance by making sure all jobs are run. If a client fails
  * the job is reassigned to the next free client.
  * 
- * @author Chintan Pathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran, Chinmayee Vaidya
  *
  */
 public class JobScheduler {
