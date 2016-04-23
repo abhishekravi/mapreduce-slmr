@@ -33,7 +33,7 @@ import neu.mr.utils.AwsUtil;
 /**
  * Class to execute the reduce jobs
  * 
- * @author Chintan Pathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran, Chinmayee Vaidya
  *
  */
 public class ReduceRunner<K1, V1, K2, V2> extends JobRunner {
