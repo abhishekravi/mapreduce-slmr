@@ -19,7 +19,7 @@ import neu.mr.utils.NetworkUtils;
  * Server side class that is responsible for periodically sending the discovery
  * packets to the possible clients.
  * 
- * @author chintanpathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran
  *
  */
 public class DiscoverySpeaker {

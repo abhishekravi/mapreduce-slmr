@@ -10,7 +10,7 @@ import neu.mr.job.JobScheduler;
 
 /**
  * Main class for the server
- * @author chintanpathak, Abhishek Ravichandran
+ * @author Chintan Pathak, Abhishek Ravichandran
  *
  */
 public class Server {

@@ -22,7 +22,7 @@ import neu.mr.job.Job;
 /**
  * This class represents a connected client.
  * 
- * @author Abhishek Ravichandran
+ * @author Abhishek Ravichandran, Chintan Pathak
  *
  */
 public class ConnectedClient {

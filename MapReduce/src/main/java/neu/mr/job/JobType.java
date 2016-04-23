@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 /**
  * Holds the different types of jobs.
- * @author chintanpathak
+ * @author Chintan Pathak
  *
  */
 public enum JobType implements Serializable{

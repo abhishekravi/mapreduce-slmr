@@ -30,7 +30,7 @@ import neu.mr.utils.NetworkUtils;
 /**
  * Class to run the map jobs
  * 
- * @author chintanpathak, Mania Abdi, Abhishek Ravichandran
+ * @author Chintan Pathak, Mania Abdi, Abhishek Ravichandran
  *
  */
 public class MapRunner<K1, V1, K2, V2> extends JobRunner {

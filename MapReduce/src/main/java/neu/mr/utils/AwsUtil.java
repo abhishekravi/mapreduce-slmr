@@ -28,7 +28,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 /**
  * Util class for interaction with s3.
  * 
- * @author Abhishek Ravi Chandran
+ * @author Abhishek Ravi Chandran, Chintan Pathak
  *
  */
 public class AwsUtil {
